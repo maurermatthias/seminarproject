@@ -1,0 +1,12 @@
+127.0.0.1 - - [26/Jan/2016:13:02:56 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:02:58 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:02:59 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:11:03 +0100] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [26/Jan/2016:13:11:08 +0100] "GET /test2/WEB-INF/classes/hibernate.cfg.xml HTTP/1.1" 404 949
+127.0.0.1 - - [26/Jan/2016:13:11:52 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:16:49 +0100] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [26/Jan/2016:13:16:52 +0100] "GET /test2/WEB-INF/classes/demo/Demo.java HTTP/1.1" 404 949
+127.0.0.1 - - [26/Jan/2016:13:17:13 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:20:50 +0100] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [26/Jan/2016:13:21:12 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83
+127.0.0.1 - - [26/Jan/2016:13:21:36 +0100] "GET /test2/rest/hello HTTP/1.1" 200 83

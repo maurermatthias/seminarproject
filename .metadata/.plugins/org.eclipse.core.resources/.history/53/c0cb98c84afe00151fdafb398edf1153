@@ -1,0 +1,322 @@
+package test2;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
+
+import entities.User;
+import hibernate.HibernateUtil;
+
+public class DBManager {
+	
+	//admin-login-data
+	static private String adminName = "admin";
+	static private String adminPwd = "admin";
+	static private String teacherName = "teacher";
+	static private String teacherPwd = "teacher";
+	static private String studentName = "student";
+	static private String studentPwd = "student";
+	
+	//static private String dbName = "db1";
+	private String userName = "java";
+	private String password = "java1";
+	private String dbUrl = "jdbc:mysql://localhost/db1";
+	
+	private String competenceStructurePrefix = "CompetenceStructure";
+	private String studentTablePrefix = "StudentTable";
+	
+	//singelton instance
+	private static DBManager instance;
+	
+	//private constructor
+	private DBManager() {
+	}
+	
+	//get connection to DB
+	public Connection getConnection(){
+
+		Connection conn = null;
+		try{
+		    Class.forName("com.mysql.jdbc.Driver");
+		    conn = DriverManager.getConnection(this.dbUrl,this.userName,this.password);
+		}catch (SQLException | ClassNotFoundException ex) {
+		    System.out.println("Not connected to database");
+		} 
+	    return conn;
+	}
+	
+	//singelton getter
+	public static DBManager getInstance() {
+		if (instance == null) {
+			instance = new DBManager();
+			if(usernameFree(adminName)){
+				try {
+					addNewUser(adminName,adminPwd,3);
+				} catch (ClassNotFoundException e) {
+					System.out.println("Adding admin failed - 1");
+					e.printStackTrace();
+				} catch (SQLException e) {
+					System.out.println("Adding admin failed - 2");
+					e.printStackTrace();
+				}
+			}
+			if(usernameFree(teacherName)){
+				try {
+					addNewUser(teacherName,teacherPwd,2);
+				} catch (ClassNotFoundException e) {
+					System.out.println("Adding teacher failed - 1");
+					e.printStackTrace();
+				} catch (SQLException e) {
+					System.out.println("Adding teacher failed - 2");
+					e.printStackTrace();
+				}
+			}
+			if(usernameFree(studentName)){
+				try {
+					addNewUser(studentName,studentPwd,1);
+				} catch (ClassNotFoundException e) {
+					System.out.println("Adding student failed - 1");
+					e.printStackTrace();
+				} catch (SQLException e) {
+					System.out.println("Adding student failed - 2");
+					e.printStackTrace();
+				}
+			}
+		}
+		return instance;
+	}
+
+	public void test() throws SQLException, ClassNotFoundException{
+		//System.out.println("test");
+		
+		Class.forName("com.mysql.jdbc.Driver");
+		Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/db1","java","java1");
+
+		
+		Statement stmt = con.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT * FROM test");
+		
+		while (rs.next()) {
+			//int x = rs.getInt("ID");
+			String s = rs.getString("TXT");
+			System.out.println(s);
+		}
+		
+				
+	}
+	
+	///Methods for User-DB
+	//check if username already exists
+	public static boolean usernameFree(String name){
+		
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+        Session session = sessionFactory.openSession(); 
+        
+        String hql = "from User where name = '"+name+"'";
+        Query query = session.createQuery(hql);
+        @SuppressWarnings("unchecked")
+		List<User> listUser = query.list();
+        
+        if(listUser.size()==0){
+        	return(true);
+        }
+		return false;
+	}
+	
+	//add new user
+	public static void addNewUser(String name,String pwd, Integer accessLevel) throws SQLException, ClassNotFoundException{
+		if(usernameFree(name)){
+			System.out.println("Adding new user");
+			
+	        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+	        Session session = sessionFactory.openSession();  
+	        session.beginTransaction();  
+	          
+	        User user = new User();  
+	        user.setName(name);
+	        user.setPwd(pwd);
+	        user.setAccessLevel(accessLevel);
+	          
+	        session.save(user);  
+	        session.getTransaction().commit();  
+	          
+	        session.close(); 
+		}
+		else{
+			System.out.println("Adding new user not possible - username already exists!");
+		}
+		
+	}
+	
+	//get user by name
+	public User getUser(String name){
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+        Session session = sessionFactory.openSession(); 
+        
+        String hql = "from User where name = '"+name+"'";
+        Query query = session.createQuery(hql);
+        @SuppressWarnings("unchecked")
+		List<User> listUser = query.list();
+        
+        if(listUser.size()==1){
+        	return(listUser.get(0));
+        }
+        
+        return null;
+	}
+	
+	//check password
+	public boolean checkPassword(String name, String pwd){
+		
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+        Session session = sessionFactory.openSession(); 
+        
+        String hql = "from User where name = '"+name+"'";
+        Query query = session.createQuery(hql);
+        @SuppressWarnings("unchecked")
+		List<User> listUser = query.list();
+        
+        if(listUser.size()==1){
+        	if(listUser.get(0).getPwd().equals(pwd)){
+        		return true;
+        	}
+        }
+		
+		return false;
+	}
+
+	///Methods for Competence Structures
+	public boolean doesTableExists(String tableName){
+
+		Connection con = this.getConnection();
+		DatabaseMetaData dbm;
+		try {
+			dbm = con.getMetaData();
+			// check if "employee" table is there
+			ResultSet tables = dbm.getTables(null, null, tableName, null);
+			if (tables.next()) {
+				return(true);
+			}
+			else {
+				return(false);
+			}
+		} catch (SQLException e) {
+			return(false);
+		}
+
+	}
+	
+	public boolean doesTableForCompetenceStructureExists(String userName){
+		return(this.doesTableExists(this.competenceStructurePrefix+userName));
+	};
+
+	//creates a new table
+	public void createTableForCompetenceStructure(String userName){
+		String tableName = this.competenceStructurePrefix+userName;
+		if(this.doesTableExists(tableName)){
+			System.out.println("This table already exists!");
+			return;
+		}
+		Connection con = this.getConnection();
+		Statement stmt;
+		try {
+			stmt = con.createStatement();	      
+		    String sql = "CREATE TABLE "+tableName+" " +
+	                   "(id INTEGER not NULL AUTO_INCREMENT, " +
+	                   " name TINYTEXT, " + 
+	                   " structure TEXT, " + 
+	                   " PRIMARY KEY ( id ))"; 
+
+	        stmt.executeUpdate(sql);
+	        con.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("It was not possible to create the table "+tableName+"!");
+		}
+
+	}
+
+	//returns all names of stored competence structures associated with a user
+	public List<String> getSavedCompetenceStructureNames(String userName){
+		String tableName = this.competenceStructurePrefix + userName;
+		Connection con = this.getConnection();
+		List<String> names = new ArrayList<String>(); 
+		//check if name already exists -> override?!
+		try {
+		     Statement st = (Statement) con.createStatement(); 
+		     ResultSet rs = st.executeQuery("SELECT name FROM "+ tableName +" GROUP BY name;");
+		      while (rs.next())
+		    	names.add(rs.getString("name"));
+		     con.close();
+		}
+		catch (SQLException ex) {
+		     System.out.println("Insertion of competence structure failed!");
+		 }
+		
+		return names;
+	}
+	
+	public String getSavedCompetenceStructure(String teacherName, String structureName){
+		String tableName = this.competenceStructurePrefix + teacherName;
+		Connection con = this.getConnection();
+		String retVal="";
+		try {
+		     Statement st = (Statement) con.createStatement(); 
+		     ResultSet rs = st.executeQuery("SELECT structure FROM "+ tableName +" WHERE name='"+structureName+"';");
+		     rs.last();
+		     int length = rs.getRow();
+		     if(length == 0){
+		    	 return null;
+		     }
+		     retVal = rs.getString("structure");
+		     con.close();
+		}
+		catch (SQLException ex) {
+		     System.out.println("Insertion of competence structure failed!");
+		 }
+		return retVal;
+	}
+	
+	public void saveCompetenceStructure(String userName, String structure, String structureName){
+		String tableName = this.competenceStructurePrefix + userName;
+		Connection con = this.getConnection();
+		try {
+		     Statement st = (Statement) con.createStatement(); 
+		     st.executeUpdate("INSERT INTO " + tableName + " VALUES (DEFAULT,'"+structureName+"','"+structure+"')");
+		     con.close();
+		     System.out.println("Inserted competence structure "+structureName+" for user "+userName+"!");
+		}
+		catch (SQLException ex) {
+		     System.out.println("Insertion of competence structure failed!");
+		 }
+	}
+
+	public void deleteCompetenceStructure(String userName, String structureName){
+		String tableName = this.competenceStructurePrefix + userName;
+		Connection con = this.getConnection();
+		try {
+		     Statement st = (Statement) con.createStatement(); 
+		     st.executeUpdate("DELETE FROM " + tableName + " WHERE name='"+structureName+"';");
+		     con.close();
+		}
+		catch (SQLException ex) {
+		     System.out.println("Deletion of competence structure failed!");
+		 }
+	}
+
+	public void addStudent(String teacherName, String teacherPwd, String studentName, String studentPwd){
+		String tableName = this.studentTablePrefix + teacherName;
+		if(!doesTableExists(tableName)){
+			//create table
+		}
+	}
+}

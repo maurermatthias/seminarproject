@@ -1,0 +1,9 @@
+package entities;
+
+public class DBcompetence extends DBentity{
+	public int competenceid;
+	public int classid;
+	public String name;
+	public String description;
+	public String visibility;
+}

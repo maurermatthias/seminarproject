@@ -1,0 +1,16 @@
+package demo;
+
+import org.hibernate.Session;  
+import org.hibernate.SessionFactory;  
+  
+import entities.Student;
+import hibernate.HibernateUtil;
+  
+public class Demo{  
+  
+    public void demo() {  
+  
+        System.out.println("ewferz"); 
+  
+    }  
+}

@@ -1,0 +1,120 @@
+package test2;
+
+
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
+import entities.User;
+
+
+// Plain old Java Object it does not extend as class or implements 
+// an interface
+
+// The class registers its methods for the HTTP GET request using the @GET annotation. 
+// Using the @Produces annotation, it defines that it can deliver several MIME types,
+// text, XML and HTML. 
+
+// The browser requests per default the HTML MIME type.
+
+//Sets the path to base URL + /hello
+@Path("/")
+public class Class1 {
+
+  
+  
+  @GET
+  @Consumes(MediaType.TEXT_PLAIN)
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("getAccessLevel")
+  public String getAccessLevel(@QueryParam("name") String userName, @QueryParam("pwd") String pwd){
+	  System.out.println(userName+"-"+pwd);
+	  if(DBManager.getInstance().checkPassword(userName, pwd)){
+		  User user = DBManager.getInstance().getUser(userName);
+		  return(user.getAccessLevel().toString());
+	  }
+	  return("0");
+  }
+  
+  @POST
+  @Consumes(MediaType.TEXT_PLAIN)
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("saveCompetenceStructure")
+  public String saveCompetenceStructure(String body,@QueryParam("structureName") String structureName, @QueryParam("name") String userName, @QueryParam("pwd") String pwd){
+	  System.out.println("POST - in header: "+body);
+	  System.out.println("POST - in header: "+userName + " - " +pwd +" - "+structureName);
+
+	  if(DBManager.getInstance().checkPassword(userName, pwd) && DBManager.getInstance().getUser(userName).getAccessLevel()==2){
+		  if(!DBManager.getInstance().doesTableForCompetenceStructureExists(userName)){
+			  DBManager.getInstance().createTableForCompetenceStructure(userName);
+		  }
+	      if(DBManager.getInstance().getSavedCompetenceStructureNames(userName).contains(structureName)){
+			  DBManager.getInstance().deleteCompetenceStructure(userName, structureName);
+		  }
+		  DBManager.getInstance().saveCompetenceStructure(userName, body, structureName);
+		  return("OK");
+	  }
+	  return("FAIL");
+  }
+  
+  @POST
+  @Consumes(MediaType.TEXT_PLAIN)
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("deleteCompetenceStructure")
+  public String deleteCompetenceStructure(@QueryParam("structureName") String structureName, @QueryParam("name") String userName, @QueryParam("pwd") String pwd){
+	  System.out.println("POST - in header: "+userName + " - " +pwd +" - "+structureName);
+
+	  if(DBManager.getInstance().checkPassword(userName, pwd) && DBManager.getInstance().getUser(userName).getAccessLevel()==2){
+		  if(DBManager.getInstance().doesTableForCompetenceStructureExists(userName)){
+		      if(DBManager.getInstance().getSavedCompetenceStructureNames(userName).contains(structureName)){
+				  DBManager.getInstance().deleteCompetenceStructure(userName, structureName);
+				  return("OK");
+			  }
+		  }
+	  }
+	  return("FAIL");
+  }
+  
+  //Method for requesting html-body
+  @GET
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("getStoredCompetenceStructureNames")
+  public String getStoredCompetenceStructureNames(@QueryParam("name") String userName, @QueryParam("pwd") String pwd) {
+	String retVal ="no values persistent";
+	if(DBManager.getInstance().checkPassword(userName, pwd) && DBManager.getInstance().getUser(userName).getAccessLevel()==2){
+		List<String> names = DBManager.getInstance().getSavedCompetenceStructureNames(userName);
+		retVal="";
+		for(int i=0;i<names.size();i++){
+			retVal += names.get(i);
+			if(i != names.size()-1)
+				retVal += "&";
+		}
+	}
+    return retVal;
+  }
+  
+  @GET
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("loadCompetenceStructure")
+  public String loadCompetenceStructure(@QueryParam("structureName") String structureName, @QueryParam("name") String userName, @QueryParam("pwd") String pwd){
+	  String retVal = "FAIL";
+	  if(DBManager.getInstance().checkPassword(userName, pwd)){
+		  retVal = DBManager.getInstance().getSavedCompetenceStructure(userName, structureName);
+	  }
+	  return(retVal);
+  }
+  
+  @POST
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("addStudent")
+  public String addStudent(@QueryParam("name") String userName, @QueryParam("pwd") String pwd, @QueryParam("studentName") String studentName, @QueryParam("studentPwd") String studentPwd){
+	  return "NOT IMPLEMENTED YET!";
+  }
+} 
+

@@ -1,0 +1,2 @@
+127.0.0.1 - - [05/Aug/2016:14:30:29 +0200] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [05/Aug/2016:14:30:29 +0200] "GET /test2/WEB-INF/classes/test2/XMLCreator.java HTTP/1.1" 404 949

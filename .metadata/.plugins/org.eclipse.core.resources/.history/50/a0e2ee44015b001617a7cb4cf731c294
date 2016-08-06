@@ -1,0 +1,113 @@
+package demo;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import javax.swing.text.Document;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.stream.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import entities.DBtask;
+import entities.DBuser;
+import test2.DBConnector;
+import test2.XMLCreator;
+
+public class Demo{  
+  
+    public void demo() {  
+  
+        System.out.println("ewferz"); 
+  
+    }  
+    
+    public static void main(String[] args) {
+        // Prints "Hello, World" to the terminal window.
+        System.out.println("START");
+        
+        DBConnector.resetDB();
+        
+        DBConnector.createTestData();
+        
+        XMLCreator xmlcreator = new XMLCreator("student1","student1");
+        String xml = xmlcreator.getLoginXML();
+        
+        Transformer transformer = null;
+		try {
+			transformer = TransformerFactory.newInstance().newTransformer();
+		} catch (TransformerConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (TransformerFactoryConfigurationError e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        //initialize StreamResult with File object to save to file
+        StreamResult result = new StreamResult(new StringWriter());
+
+
+
+Element node = null;
+try {
+	node = (Element) DocumentBuilderFactory
+	    .newInstance()
+	    .newDocumentBuilder()
+	    .parse(new ByteArrayInputStream(xml.getBytes()))
+	    .getDocumentElement();
+} catch (SAXException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+} catch (IOException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+} catch (ParserConfigurationException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}
+
+
+        
+        
+        DOMSource source = new DOMSource((org.w3c.dom.Node) node);
+        try {
+			transformer.transform(source, result);
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        String xmlString = result.getWriter().toString();
+        System.out.println(xmlString);
+        
+        System.out.println(xml);
+        
+        /*
+        DBuser user = new DBuser();
+        user.creator=23;
+        user.name="testname";
+        user.password="pwd";
+        user.usergroup=1;
+        
+		DBConnector.addNewUser(user);
+		*/
+        
+
+        System.out.println("END");
+    }
+}

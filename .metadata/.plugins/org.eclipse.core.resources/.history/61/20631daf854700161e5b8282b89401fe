@@ -1,0 +1,20 @@
+package demo;
+
+import test2.DBConnector;
+
+public class Demo{  
+  
+    public void demo() {  
+  
+        System.out.println("ewferz"); 
+  
+    }  
+    
+    public static void main(String[] args) {
+        // Prints "Hello, World" to the terminal window.
+        System.out.println("Hello, World");
+        
+        DBConnector.getInstance().createTable("users");
+        DBConnector.getInstance().createTable("competences");
+    }
+}

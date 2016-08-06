@@ -1,0 +1,10 @@
+package entities;
+
+public class DBcompetencevalue {
+
+	public int id;
+	public int studentid;
+	public int classid;
+	public int competenceid;
+	public double value; 
+}

@@ -1,0 +1,9 @@
+package entities;
+
+import org.simpleframework.xml.Root;
+
+public class DBregisteredstudent extends DBentity{
+	public int id;
+	public int classid;
+	public int studentid;
+}

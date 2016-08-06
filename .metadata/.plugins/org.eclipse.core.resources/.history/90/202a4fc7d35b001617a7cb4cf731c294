@@ -1,0 +1,254 @@
+package test2;
+
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
+import entities.DBentity;
+import entities.DBuser;
+import entities.Usergroup;
+import entities.DBclass;
+
+public class XMLCreator {
+	
+	public int userId;
+	public Usergroup usergroup;
+	public int creatorId;
+	
+	private static int indentsize = 2;
+
+	public XMLCreator(String username, String password){
+		List<DBentity> user = DBConnector.select("users", "name='"+username+"' AND password='"+password+"'");
+		
+		if(user.isEmpty()){
+			usergroup = Usergroup.fromInteger(((DBuser)user.get(0)).usergroup);
+			userId = 0;
+			creatorId = 0;
+		}
+		else{
+			usergroup = Usergroup.fromInteger(((DBuser)user.get(0)).usergroup);
+			userId = ((DBuser)user.get(0)).userid;
+			if(usergroup == Usergroup.STUDENT)
+				creatorId = ((DBuser)user.get(0)).creator;
+		}
+	}
+	
+	public String getLoginXML(){
+		switch(usergroup){
+		case UNKNOWN:
+			return getLoginXMLUnknown();
+		case STUDENT:
+			return getLoginXMLStudent();
+		case TEACHER:
+			return getLoginXMLTeacher();
+		case ADMINISTRATOR:
+			return getLoginXMLAdministrator();
+		default:
+			System.out.println("This line should never be reached!");
+			return null;
+		}
+	}
+	
+	private String getLoginXMLUnknown(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>0</usergroup>";
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLStudent(){
+		String xml = "<loginxml>";
+		
+		xml+= "<usergroup>1</usergroup>";
+		
+		xml += "<registeredclasses>";
+		List<DBentity> entities = DBConnector.getRegisteredClasses(this.userId);
+		for(DBentity entity : entities){
+			DBclass clazz = (DBclass) entity;
+			xml += clazz.toXML();
+		}
+		xml += "</registeredclasses>";
+		
+		xml += "<availableclasses>";
+		entities = DBConnector.getAvailableClasses(this.creatorId);
+		for(DBentity entity : entities){
+			DBclass clazz = (DBclass) entity;
+			xml += clazz.toXML();
+		}
+		xml += "</availableclasses>";
+		
+		
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLTeacher(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>2</usergroup>";
+		
+		xml+="<createdclasses>";
+		List<DBentity> clazzes = DBConnector.getClassesByTeacherId(this.userId);
+		for(DBentity clazz : clazzes){
+			xml+=((DBclass) clazz).toXML();
+		}
+		xml+="</createdclasses>";
+		
+		xml+="<createdstudents>";
+		List<DBentity> students = DBConnector.getCreatedStudentsByCreatorId(this.userId);
+		for(DBentity student : students){
+			xml+=((DBuser) student).toXML();
+		}
+		xml+="</createdstudents>";
+		
+		//add all competence stuff
+		
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLAdministrator(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>3</usergroup>";
+		
+		xml += "<administrators>";
+		List<DBentity> entities = DBConnector.getAllAdministartors();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += user.toXML();
+		}
+		xml += "</administrators>";
+		
+		xml += "<teachers>";
+		entities = DBConnector.getAllTeacher();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += "<user>";
+			xml+="<usergroup>2</usergroup>";
+			xml+="<name>"+user.name+"</name>";
+			xml+="<createdclasses>";
+			List<DBentity> clazzes = DBConnector.getClassesByTeacherId(user.userid);
+			for(DBentity clazz : clazzes){
+				xml+=((DBclass) clazz).toXML();
+			}
+			xml+="</createdclasses>";
+			xml += "</user>";
+		}
+		xml += "</teachers>";
+		
+		xml += "<students>";
+		entities = DBConnector.getAllStudents();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += "<user>";
+			xml+="<usergroup>1</usergroup>";
+			xml+="<name>"+user.name+"</name>";
+			xml+="<registeredclasses>";
+			List<DBentity> clazzes = DBConnector.getRegisteredClasses(user.userid);
+			for(DBentity clazz : clazzes){
+				xml+=((DBclass) clazz).toXML();
+			}
+			xml+="</registeredclasses>";
+			xml += "</user>";
+		}
+		xml += "</students>";
+		
+		return xml+"</loginxml>";
+	}
+
+	public static String prettyFormat(String xml){
+		String newline = System.getProperty("line.separator");
+		return prettyFormat("",xml.replace(newline, ""),0,true);
+	}
+	
+	private static String prettyFormat(String nicexml,String oldxml,int indent, boolean printindent){
+		if(XMLCreator.isTagNext(oldxml)){
+			String nextTag = getNextTag(oldxml);
+			if(nextTag == null)
+				return nicexml;
+			boolean startTag = (nextTag.substring(0, 1).equals("/")) ? false : true;
+			
+			if(!startTag)
+				indent--;
+			
+			if(printindent)
+				for(int i=1;i<=(indent*XMLCreator.indentsize);i++)
+					nicexml+=" ";
+			
+			nicexml += "<"+nextTag+">"+System.getProperty("line.separator");
+			oldxml = oldxml.substring(oldxml.indexOf(">")+1);
+			
+			if(startTag)
+				indent++;
+			
+			printindent = true;
+		}else{
+			if(oldxml.replace(" ","").equals(""))
+				return nicexml;
+			nicexml = nicexml.substring(0,nicexml.length()-1);
+			String word = oldxml.substring(0, oldxml.indexOf("<"));
+			nicexml += word;
+			oldxml = oldxml.substring(word.length());
+			printindent = false;
+		}
+
+		return prettyFormat(nicexml,oldxml,indent,printindent);
+	}
+	
+	private static boolean isTagNext(String xml){
+		xml = xml.replace(" ","");
+		if(xml.length() == 0  || xml.substring(0,1).equals("<"))
+			return true;
+		return false;
+	}
+	
+	private static String getNextTag(String xml){
+		int posStart = xml.indexOf("<");
+		int posEnd = xml.indexOf(">");
+		if(posStart != -1 && posEnd != -1){
+			String rxml = xml.substring(posStart+1, posEnd); 
+			return rxml.replace(" ", "");
+		}
+		return null;
+	}
+	
+    private static String convertDocumentToString(Document doc) {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer;
+        try {
+            transformer = tf.newTransformer();
+            // below code to remove XML declaration
+            // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            String output = writer.getBuffer().toString();
+            return output;
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+
+    private static Document convertStringToDocument(String xmlStr) {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+        DocumentBuilder builder;  
+        try  
+        {  
+            builder = factory.newDocumentBuilder();  
+            Document doc = builder.parse( new InputSource( new StringReader( xmlStr ) ) ); 
+            return doc;
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } 
+        return null;
+    }
+	
+}

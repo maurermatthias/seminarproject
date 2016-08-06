@@ -1,0 +1,662 @@
+package test2;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import entities.DBclass;
+import entities.DBcompetence;
+import entities.DBcompetencestructure;
+import entities.DBcompetencevalue;
+import entities.DBcompetenceweight;
+import entities.DBentity;
+import entities.DBlinkageclasscstructure;
+import entities.DBlinkageclasstask;
+import entities.DBlinkagetaskcompetence;
+import entities.DBregisteredstudent;
+import entities.DBtask;
+import entities.DBuser;
+import entities.Usergroup;
+
+
+
+
+public class DBConnector {
+	//admin-login-data
+	static private String adminName = "admin";
+	static private String adminPwd = "admin";
+	static private String teacherName = "teacher";
+	static private String teacherPwd = "teacher";
+
+	//static private String dbName = "db1";
+	private static String userName = "java2";
+	private static String password = "java3";
+	private static String dbUrl = "jdbc:mysql://localhost/db2";
+	
+	//singelton instance
+	//private static DBConnector instance;
+	
+	//table identifier
+	private static String[] tableIdentifier = {"users","competences","tasks","competencestructures",
+			"classes","competencevalues","linkagetaskcompetence","competenceweights",
+			"linkageclasstask","linkageclasscstructure","registeredstudents"};
+	
+	//private constructor
+	private DBConnector() {
+	}
+	
+	//get connection to DB
+	public static Connection getConnection(){
+
+		Connection conn = null;
+		try{
+		    Class.forName("com.mysql.jdbc.Driver");
+		    conn = DriverManager.getConnection(dbUrl,userName,password);
+		}catch (SQLException | ClassNotFoundException ex) {
+		    System.out.println("Not connected to database");
+		} 
+	    return conn;
+	}
+	
+	//singelton getter
+	public static void resetDB() {
+		System.out.println("Reset DB - deleting all tables/content, recreating tables and inserting admin/teacher");
+		createEmptyTable();
+		if(usernameFree(adminName)){
+			DBuser user = new DBuser();
+			user.name=adminName;
+			user.usergroup = 3;
+			user.password = adminPwd;
+			user.creator = -1;
+			addNewUser(user);
+		}
+		if(usernameFree(teacherName)){
+			DBuser user = new DBuser();
+			user.name=teacherName;
+			user.usergroup = 2;
+			user.password = teacherPwd;
+			user.creator = -1;
+			addNewUser(user);
+		}
+	}
+	
+	///Methods for User-DB
+	//check if username already exists
+	public static boolean usernameFree(String name){
+
+        List<DBentity> rs = select("users","name='"+name+"'");
+        
+        if (rs.isEmpty())   
+        	return true;
+		
+		return false;
+	}
+	
+	//returns usergroup for supplied login data (1..student/2...teacher/3...admin/0...unknown)
+	public static Usergroup getUsergroup(String name, String password){
+		List<DBentity> user = select("users","name='"+name+"' AND password='"+password+"'");
+		
+        if (user.isEmpty())   
+        	return Usergroup.fromInteger(0);
+        
+        return Usergroup.fromInteger(((DBuser)user.get(0)).usergroup);
+	}
+	
+	//add new user
+	public static void addNewUser(DBuser user) {
+		if(usernameFree(user.name)){
+			//String cmd = "INSERT INTO users (creator,name,usergroup,password) VALUES (\""+creator
+			//		+"\",\""+name+"\","+usergroup+",\""+pwd+"\");";
+			//update(cmd);
+			insert("users",user);
+			System.out.println("New user '"+user.name+"' inserted.");
+		}
+		else{
+			System.out.println("Adding new user not possible - username '"+user.name+"' already exists!");
+		}
+	}
+		
+	//execute a select command
+	public static List<DBentity> select(String table, String where){
+		Statement stmt = null;
+		ResultSet rs = null;
+		List<DBentity> results = new ArrayList<DBentity>();
+		
+		String cmd;
+		if(where == null)
+			cmd = "SELECT * FROM "+table+";";
+		else
+			cmd = "SELECT * FROM "+table+" WHERE "+where+";";
+		
+		System.out.println("Executing command: "+cmd);
+		
+		try{
+			Connection con = getConnection();
+		    stmt = con.createStatement();
+		    stmt.execute(cmd);
+		    rs = stmt.getResultSet();
+		    
+		    switch(table){
+			    case "users":
+		        	while(rs.next()){
+		        		DBuser ue = new DBuser();
+		        		ue.userid = rs.getInt("userid");
+		        		ue.usergroup = rs.getInt("usergroup");
+		        		ue.name = rs.getString("name");
+		        		ue.creator = rs.getInt("creator");
+		        		ue.password = rs.getString("password");
+		        		results.add(ue);
+		        	}
+			    	break;
+			    case "competencevalues":
+		        	while(rs.next()){
+		        		DBcompetencevalue cv = new DBcompetencevalue();
+		        		cv.classid = rs.getInt("classid");
+		        		cv.competenceid = rs.getInt("competenceid");
+		        		cv.id = rs.getInt("id");
+		        		cv.studentid = rs.getInt("studentid");
+		        		cv.value = rs.getDouble("value");
+		        		results.add(cv);
+		        	}
+			    	break;
+			    case "competences":
+		        	while(rs.next()){
+		        		DBcompetence c = new DBcompetence();
+		        		c.competenceid = rs.getInt("competenceid");
+		        		c.creator = rs.getInt("creator");
+		        		c.name = rs.getString("name");
+		        		c.description = rs.getString("description");
+		        		c.visibility = rs.getString("visibility");
+		        		results.add(c);
+		        	}
+			    	break;
+			    case "tasks":
+		        	while(rs.next()){
+		        		DBtask t = new DBtask();
+		        		t.taskid = rs.getInt("taskid");
+		        		t.creator = rs.getInt("creator");
+		        		t.name = rs.getString("name");
+		        		t.description = rs.getString("description");
+		        		t.visibility = rs.getString("visibility");
+		        		t.text = rs.getString("text");
+		        		t.answer = rs.getString("answer");
+		        		results.add(t);
+		        	}
+			    	break;
+			    case "linkagetaskcompetence":
+		        	while(rs.next()){
+		        		DBlinkagetaskcompetence ltc = new DBlinkagetaskcompetence();
+		        		ltc.id = rs.getInt("id");
+		        		ltc.taskid = rs.getInt("taskid");
+		        		ltc.competenceid = rs.getInt("competenceid");
+		        		ltc.weight = rs.getDouble("weight");
+		        		results.add(ltc);
+		        	}
+			    	break;
+			    case "competencestructures":
+		        	while(rs.next()){
+		        		DBcompetencestructure cs = new DBcompetencestructure();
+		        		cs.cstructureid = rs.getInt("cstructureid");
+		        		cs.creator = rs.getInt("creator");
+		        		cs.name = rs.getString("creator");
+		        		cs.description = rs.getString("description");
+		        		cs.visibility = rs.getString("visibility");
+		        		results.add(cs);
+		        	}
+			    	break;
+			    case "competenceweights":
+		        	while(rs.next()){
+		        		DBcompetenceweight cw = new DBcompetenceweight();
+		        		cw.id = rs.getInt("id");
+		        		cw.fromcompetenceid = rs.getInt("fromcompetenceid");
+		        		cw.tocompetenceid = rs.getInt("tocompetenceid");
+		        		cw.cstructureid = rs.getInt("cstructureid");
+		        		cw.weight = rs.getDouble("weight");
+		        		results.add(cw);
+		        	}
+			    	break;
+			    case "classes":
+		        	while(rs.next()){
+		        		DBclass cl = new DBclass();
+		        		cl.classid = rs.getInt("classid");
+		        		cl.creator = rs.getInt("creator");
+		        		cl.name = rs.getString("name");
+		        		cl.description = rs.getString("description");
+		        		cl.visibility = rs.getString("visibility");
+		        		results.add(cl);
+		        	}
+			    	break;
+			    case "linkageclasstask":
+		        	while(rs.next()){
+		        		DBlinkageclasstask lct = new DBlinkageclasstask();
+		        		lct.id = rs.getInt("id");
+		        		lct.taskid = rs.getInt("taskid");
+		        		lct.classid = rs.getInt("classid");
+		        		results.add(lct);
+		        	}
+			    	break;
+			    case "linkageclasscstructure":
+		        	while(rs.next()){
+		        		DBlinkageclasscstructure lcc = new DBlinkageclasscstructure();
+		        		lcc.id = rs.getInt("id");
+		        		lcc.cstrutureid = rs.getInt("cstrutureid");
+		        		lcc.classid = rs.getInt("classid");
+		        		results.add(lcc);
+		        	}
+			    	break;
+			    case "registeredstudents":
+		        	while(rs.next()){
+		        		DBregisteredstudent res = new DBregisteredstudent();
+		        		res.id = rs.getInt("id");
+		        		res.studentid = rs.getInt("studentid");
+		        		res.classid = rs.getInt("classid");
+		        		results.add(res);
+		        	}
+			    	break;
+		    }
+		    
+		    
+		}catch(SQLException ex){
+		    // handle any errors
+		    System.out.println("SQLException: " + ex.getMessage());
+		    System.out.println("SQLState: " + ex.getSQLState());
+		    System.out.println("VendorError: " + ex.getErrorCode());
+		}
+		finally {
+
+		    if (rs != null) {
+		        try {
+		            rs.close();
+		        } catch (SQLException sqlEx) { } // ignore
+
+		        rs = null;
+		    }
+		    if (stmt != null) {
+		        try {
+		            stmt.close();
+		        } catch (SQLException sqlEx) { } // ignore
+
+		        stmt = null;
+		    }
+		}
+		
+		return results;
+	}
+	
+	//insert an database entity into a table
+	public static void insert(String table, DBentity entity){
+	    
+		String cmd = "INSERT INTO "+ table +" ";
+		
+	    switch(table){
+		    case "users":
+		    	DBuser u = (DBuser) entity;
+		    	cmd += "(usergroup,name,creator,password) VALUES ";
+		    	cmd += "("+u.usergroup+",'"+u.name+"',"+u.creator+",'"+u.password+"');";
+	        	update(cmd);
+		    	break;
+		    case "competencevalues":
+		    	DBcompetencevalue cv = (DBcompetencevalue) entity;
+		    	cmd += "(competenceid,classid,studentid,value) VALUES ";
+		    	cmd += "("+cv.competenceid+","+cv.classid+","+cv.studentid+","+cv.value+");";
+		    	update(cmd);
+		    	break;
+		    case "competences":
+		    	DBcompetence c = (DBcompetence) entity;
+		    	cmd += "(creator,name,description,visibility) VALUES ";
+		    	cmd += "('"+c.creator+"','"+c.name+"','"+c.description+"','"+c.visibility+"');";
+		    	update(cmd);
+		    	break;
+		    case "tasks":
+		    	DBtask t = (DBtask) entity;
+		    	cmd += "(creator,name,description,visibility,text,answer) VALUES ";
+		    	cmd += "("+t.creator+",'"+t.name+"','"+t.description+"','"+t.visibility+"','"+t.text+"','"+t.answer+"');";
+		    	update(cmd);
+		    	break;
+		    case "linkagetaskcompetence":
+		    	DBlinkagetaskcompetence ltc = (DBlinkagetaskcompetence) entity;
+		    	cmd += "(taskid,competenceid,weight) VALUES ";
+		    	cmd += "("+ltc.taskid+","+ltc.competenceid+","+ltc.weight+");";
+		    	update(cmd);
+		    	break;
+		    case "competencestructures":
+		    	DBcompetencestructure cs = (DBcompetencestructure) entity;
+		    	cmd += "(creator,name,description,visibility) VALUES ";
+		    	cmd += "("+cs.creator+",'"+cs.name+"','"+cs.description+"','"+cs.visibility+"');";
+		    	update(cmd);
+		    	break;
+		    case "competenceweights":
+		    	DBcompetenceweight cw = (DBcompetenceweight) entity;
+		    	cmd += "(fromcompetenceid,tocompetenceid,cstructureid,weight) VALUES ";
+		    	cmd += "("+cw.fromcompetenceid+","+cw.tocompetenceid+","+cw.cstructureid+","+cw.weight+");";
+		    	update(cmd);
+		    	break;
+		    case "classes":
+		    	DBclass cl = (DBclass) entity;
+		    	cmd += "(creator,name,description,visibility) VALUES ";
+		    	cmd += "("+cl.creator+",'"+cl.name+"','"+cl.description+"','"+cl.visibility+"');";
+		    	update(cmd);
+		    	break;
+		    case "linkageclasstask":
+		    	DBlinkageclasstask lct = (DBlinkageclasstask) entity;
+		    	cmd += "(taskid,classid) VALUES ";
+		    	cmd += "("+lct.taskid+","+lct.classid+");";
+		    	update(cmd);
+		    	break;
+		    case "linkageclasscstructure":
+		    	DBlinkageclasscstructure lcc = (DBlinkageclasscstructure) entity;
+		    	cmd += "(cstructureid,classid) VALUES ";
+		    	cmd += "("+lcc.cstrutureid+","+lcc.classid+");";
+		    	update(cmd);
+		    	break;
+		    case "registeredstudents":
+		    	DBregisteredstudent rs = (DBregisteredstudent) entity;
+		    	cmd += "(studentid,classid) VALUES ";
+		    	cmd += "("+rs.studentid+","+rs.classid+");";
+		    	update(cmd);
+		    	break;
+	    }
+	}
+	
+	//Executes an SQL command, returns the result-set, if command was SELECT
+ 	public static void update(String cmd){
+ 		System.out.println("Executing command: "+cmd);
+		Statement stmt = null;
+
+		try {
+			Connection con = getConnection();
+		    stmt = con.createStatement();
+		    stmt.execute(cmd);
+		  
+		}
+		catch (SQLException ex){
+		    // handle any errors
+		    System.out.println("SQLException: " + ex.getMessage());
+		    System.out.println("SQLState: " + ex.getSQLState());
+		    System.out.println("VendorError: " + ex.getErrorCode());
+		}
+		finally {
+		    if (stmt != null) {
+		        try {
+		            stmt.close();
+		        } catch (SQLException sqlEx) { } // ignore
+
+		        stmt = null;
+		    }
+		}
+	}
+	
+	public static void createTable(String type){
+        String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "CREATE TABLE IF NOT EXISTS users (" 
+	                    + "userid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "usergroup INT(2),"  
+	                    + "password TEXT,"
+	                    + "PRIMARY KEY (userid))"; 
+	            break;
+	        case "competences":
+	            usertable += "CREATE TABLE IF NOT EXISTS competences (" 
+	                    + "competenceid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "PRIMARY KEY (competenceid))"; 
+	            break;
+	        case "tasks":
+	            usertable += "CREATE TABLE IF NOT EXISTS tasks (" 
+	                    + "taskid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    + "text TEXT,"  
+	                    + "answer TEXT,"
+	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "PRIMARY KEY (taskid))"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "CREATE TABLE IF NOT EXISTS competencestructures (" 
+	                    + "competencestructureid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "PRIMARY KEY (competencestructureid))"; 
+	            break;
+	        case "classes":
+	            usertable += "CREATE TABLE IF NOT EXISTS classes (" 
+	                    + "classid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "PRIMARY KEY (classid))"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "CREATE TABLE IF NOT EXISTS competencevalues (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "studentid INT(64) NOT NULL," 
+	                    + "classid INT(64) NOT NULL,"  
+	                    + "competenceid INT(64) NOT NULL,"  
+	                    + "value DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (studentid) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (classid) REFERENCES classes(classid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (competenceid) REFERENCES competences(competenceid) ON DELETE CASCADE)";
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "CREATE TABLE IF NOT EXISTS linkagetaskcompetence (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "taskid INT(64) NOT NULL,"  
+	                    + "competenceid INT(64) NOT NULL,"  
+	                    + "weight DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (taskid) REFERENCES tasks(taskid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (competenceid) REFERENCES competences(competenceid) ON DELETE CASCADE)";
+	            break;
+	        case "linkageclasstask":
+	            usertable += "CREATE TABLE IF NOT EXISTS linkageclasstask (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "taskid INT(64) NOT NULL,"  
+	                    + "classid INT(64) NOT NULL,"  
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (taskid) REFERENCES tasks(taskid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (classid) REFERENCES classes(classid) ON DELETE CASCADE)";
+	            break;
+	        case "linkageclasscstructure":
+	            usertable += "CREATE TABLE IF NOT EXISTS linkageclasscstructure (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "taskid INT(64) NOT NULL,"  
+	                    + "cstructureid INT(64) NOT NULL,"  
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (taskid) REFERENCES tasks(taskid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (cstructureid) REFERENCES competencestructures(competencestructureid) ON DELETE CASCADE)";
+	            break;
+	        case "competenceweights":
+	            usertable += "CREATE TABLE IF NOT EXISTS competenceweights (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "fromcompetenceid INT(64) NOT NULL,"  
+	                    + "tocompetenceid INT(64) NOT NULL,"  
+	                    + "cstructureid INT(64) NOT NULL,"  
+	                    + "weight DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (fromcompetenceid) REFERENCES competences(competenceid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (tocompetenceid) REFERENCES competences(competenceid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (cstructureid) REFERENCES competencestructures(competencestructureid) ON DELETE CASCADE)";
+	            break;
+	        case "registeredstudents":
+	            usertable += "CREATE TABLE IF NOT EXISTS registeredstudents (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "classid INT(64) NOT NULL,"  
+	                    + "studentid INT(64) NOT NULL,"  
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (classid) REFERENCES classes(classid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (studentid) REFERENCES users(userid) ON DELETE CASCADE)";
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = DBConnector.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when creating table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public static void createTable(){
+		for(int i=0;i<DBConnector.tableIdentifier.length;i++)
+			createTable(DBConnector.tableIdentifier[i]);
+	}
+	
+	public static void truncateTable(String type){
+		String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "TRUNCATE TABLE users"; 
+	            break;
+	        case "competences":
+	            usertable += "TRUNCATE TABLE competences"; 
+	            break;
+	        case "tasks":
+	            usertable += "TRUNCATE TABLE tasks"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "TRUNCATE TABLE competencestructure"; 
+	            break;
+	        case "classes":
+	            usertable += "TRUNCATE TABLE classes"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "TRUNCATE TABLE competencevalues"; 
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "TRUNCATE TABLE linkagetaskcompetence"; 
+	            break;
+	        case "competenceweights":
+	            usertable += "TRUNCATE TABLE competenceweights"; 
+	            break;
+	        case "linkageclasstask":
+	            usertable += "TRUNCATE TABLE linkageclasstask"; 
+	            break;
+	        case "linkageclasscstructure":
+	            usertable += "TRUNCATE TABLE linkageclasscstructure"; 
+	            break;
+	        case "registeredstudents":
+	            usertable += "TRUNCATE TABLE registeredstudents"; 
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = DBConnector.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when truncating table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public static void truncateTable(){
+		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
+			truncateTable(DBConnector.tableIdentifier[i]);
+	}
+	
+	public static void createEmptyTable(String type){
+		dropTable(type);
+		createTable(type);
+	}
+	
+	public static void createEmptyTable(){
+		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
+			dropTable(DBConnector.tableIdentifier[i]);
+		for(int i=0;i<DBConnector.tableIdentifier.length;i++)
+			createTable(DBConnector.tableIdentifier[i]);
+	}
+	
+	public static void dropTable(String type){
+		String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "DROP TABLE IF EXISTS users"; 
+	            break;
+	        case "competences":
+	            usertable += "DROP TABLE IF EXISTS competences"; 
+	            break;
+	        case "tasks":
+	            usertable += "DROP TABLE IF EXISTS tasks"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "DROP TABLE IF EXISTS competencestructure"; 
+	            break;
+	        case "classes":
+	            usertable += "DROP TABLE IF EXISTS classes"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "DROP TABLE IF EXISTS competencevalues"; 
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "DROP TABLE IF EXISTS linkagetaskcompetence"; 
+	            break;
+	        case "competenceweights":
+	            usertable += "DROP TABLE IF EXISTS competenceweights"; 
+	            break;
+	        case "linkageclasstask":
+	            usertable += "DROP TABLE IF EXISTS linkageclasstask"; 
+	            break;
+	        case "linkageclasscstructure":
+	            usertable += "DROP TABLE IF EXISTS linkageclasscstructure"; 
+	            break;
+	        case "registeredstudents":
+	            usertable += "DROP TABLE IF EXISTS registeredstudents"; 
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = DBConnector.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when dropping table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public static void dropTable(){
+		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
+			dropTable(DBConnector.tableIdentifier[i]);
+	}
+
+	public static List<DBclass> getRegisteredClasses(int studentid){
+		
+	}
+	
+}

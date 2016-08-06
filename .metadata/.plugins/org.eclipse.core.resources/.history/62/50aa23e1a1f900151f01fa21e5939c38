@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FANCY NAME</title>
+<script src="JS/jquery-2.2.2.min.js"></script>
+<script src="JS/SessionInformation.js"></script>
+<script src="JS/teacher.js"></script>
+<script src="JS/listener.js"></script>
+<script src="JS/webRequests.js"></script>
+<script>
+var sessionInformation = new SessionInformation();
+</script>
+<link rel="stylesheet" href="JS/style.css">
+</head>
+<body>
+<div id="menudiv">
+	<div id="errorMsg" ></div>
+</div>
+<div id="bodydiv"></div>
+<script>
+var teacher = new Teacher();
+teacher.addCompetence();
+teacher.addCompetence();
+teacher.addCompetence();
+teacher.addCompetence();
+teacher.addCompetence();
+teacher.addCompetence();
+</script>
+</body>
+</html>

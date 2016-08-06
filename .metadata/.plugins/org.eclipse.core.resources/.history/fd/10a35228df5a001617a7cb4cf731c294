@@ -1,0 +1,35 @@
+package demo;
+
+import entities.DBtask;
+import entities.DBuser;
+import test2.DBConnector;
+
+public class Demo{  
+  
+    public void demo() {  
+  
+        System.out.println("ewferz"); 
+  
+    }  
+    
+    public static void main(String[] args) {
+        // Prints "Hello, World" to the terminal window.
+        System.out.println("Hello, World");
+        
+        DBConnector.resetDB();
+        
+        System.out.println(DBConnector.getUsergroup("admin","admin"));
+        
+        /*
+        DBuser user = new DBuser();
+        user.creator=23;
+        user.name="testname";
+        user.password="pwd";
+        user.usergroup=1;
+        
+		DBConnector.addNewUser(user);
+		*/
+        
+
+    }
+}

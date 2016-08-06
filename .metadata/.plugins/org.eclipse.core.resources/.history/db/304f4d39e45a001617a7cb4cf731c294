@@ -1,0 +1,16 @@
+package entities;
+
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.Root;
+
+@Root(name="class")
+public class DBclass extends DBentity{
+	public int classid;
+	public int creator;
+	public String visibility;
+	
+	@Element(name="name")
+	public String name;
+	@Element(name="description")
+	public String description;
+}

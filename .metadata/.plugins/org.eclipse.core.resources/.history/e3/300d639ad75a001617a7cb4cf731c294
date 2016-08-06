@@ -1,0 +1,13 @@
+package test2;
+
+import entities.DBuser;
+
+public class XMLCreator {
+	
+	public int userId;
+
+	public XMLCreator(String username, String password){
+		DBuser user = (DBuser) DBConnector.select("users", "name='"+username+"' AND password='"+password+"'");
+		userId = user.userid;
+	}
+}

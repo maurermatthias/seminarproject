@@ -1,0 +1,27 @@
+package demo;
+
+import entities.DBuser;
+import test2.DBConnector;
+
+public class Demo{  
+  
+    public void demo() {  
+  
+        System.out.println("ewferz"); 
+  
+    }  
+    
+    public static void main(String[] args) {
+        // Prints "Hello, World" to the terminal window.
+        System.out.println("Hello, World");
+        
+        DBuser user = new DBuser();
+        
+		DBConnector.addNewUser(user);
+        
+        //DBConnector.getInstance().dropTable();
+        //DBConnector.getInstance().createTable();
+        //DBConnector.getInstance().truncateTable();
+        //DBConnector.getInstance().createEmptyTable();
+    }
+}

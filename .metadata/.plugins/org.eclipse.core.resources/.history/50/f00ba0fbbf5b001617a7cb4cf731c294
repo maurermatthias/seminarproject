@@ -1,0 +1,21 @@
+package entities;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.Root;
+
+@Root(name="task")
+public class DBtask extends DBentity{
+	
+	public int taskid;
+	public int creator;
+	public Visibility visibility;
+	
+	@Element(name="name")
+	public String name;
+	@Element(name="description")
+	public String description;
+	@Element(name="text")
+	public String text;
+	@Element(name="answer")
+	public String answer;
+	
+}

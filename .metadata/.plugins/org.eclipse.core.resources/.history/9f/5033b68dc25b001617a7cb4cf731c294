@@ -1,0 +1,7 @@
+package entities;
+
+public class DBlinkageclasscstructure extends DBentity{
+	public int id;
+	public int cstrutureid;
+	public int classid;
+}

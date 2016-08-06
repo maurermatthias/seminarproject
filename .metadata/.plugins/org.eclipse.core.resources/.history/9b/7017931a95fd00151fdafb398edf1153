@@ -1,0 +1,48 @@
+function SessionInformation(){
+	this.menuDiv = 'menudiv';
+	this.bodyDiv = 'bodydiv';
+	this.user = new User();
+	this.basePath = "http://localhost:8080/test2/rest/";
+	this.getAccessLevelUrl = this.basePath + "getAccessLevel";
+	this.postCompetenceStructureUrl = this.basePath + "saveCompetenceStructure";
+	this.getStoredCompetenceStructureNamesUrl =this.basePath + "getStoredCompetenceStructureNames";
+	this.getCompetenceStructureUrl = this.basePath + "loadCompetenceStructure";
+	this.getRequestUrlAdding = function(){
+		return("?name="+this.user.name+"&pwd="+this.user.pwd);
+	};
+	this.getAccessLevelUrlIdentificated = function(){
+		return(this.getAccessLevelUrl+this.getRequestUrlAdding());
+	};
+	this.postCompetenceStructureUrlIdentificated = function(){
+		return(this.postCompetenceStructureUrl+this.getRequestUrlAdding()+"&structureName="+teacher.structureName);
+	};
+	this.getStoredCompetenceStructureNamesUrlIdentificated = function(){
+		return(this.getStoredCompetenceStructureNamesUrl+this.getRequestUrlAdding());
+	};
+	this.getCompetenceStructureUrlIdentificated = function(structureName){
+		return(this.getCompetenceStructureUrl+this.getRequestUrlAdding()+"&structureName="+structureName);
+	};
+	this.doTeacherLogin = function(){
+		this.user.name='teacher';
+		this.user.pwd='teacher';
+		this.user.accessLevel=2;
+		teacher.exampleFill();
+		reloadPage();
+	};
+	this.printAlert = function(msg,time){
+		document.getElementById('errorMsg').style.color = "red";
+		document.getElementById('errorMsg').innerHTML = '<p> '+msg+'</p>';
+		setTimeout(function() { $("#errorMsg")[0].innerHTML=""; }, time);
+	}
+	this.printInformation = function(msg,time){
+		document.getElementById('errorMsg').style.color = "green";
+		document.getElementById('errorMsg').innerHTML = '<p> '+msg+'</p>';
+		setTimeout(function() { $("#errorMsg")[0].innerHTML=""; }, time);
+	}
+}
+
+function User(name,pwd) {
+	this.name=name;
+	this.pwd=pwd;
+	this.accessLevel=0;
+}

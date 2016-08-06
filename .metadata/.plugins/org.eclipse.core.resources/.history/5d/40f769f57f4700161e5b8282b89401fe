@@ -1,0 +1,13 @@
+package test2;
+
+public class DBConnector {
+
+	//static private String dbName = "db1";
+	private String userName = "java";
+	private String password = "java1";
+	private String dbUrl = "jdbc:mysql://localhost/db1";
+	
+	
+	
+	
+}

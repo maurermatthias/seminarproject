@@ -1,0 +1,342 @@
+package test2;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
+import com.mysql.jdbc.Statement;
+
+import entities.User;
+import hibernate.HibernateUtil;
+
+public class DBConnector {
+	
+	//admin-login-data
+	static private String adminName = "admin";
+	static private String adminPwd = "admin";
+	static private String teacherName = "teacher";
+	static private String teacherPwd = "teacher";
+
+	//static private String dbName = "db1";
+	private String userName = "java2";
+	private String password = "java3";
+	private String dbUrl = "jdbc:mysql://localhost/db2";
+	
+	//singelton instance
+	private static DBConnector instance;
+	
+	//table identifier
+	String[] tableIdentifier = {"users","competences","tasks","competencestructures",
+			"classes","competencevalues","linkagetaskcompetence","competenceweight"};
+	
+	//private constructor
+	private DBConnector() {
+	}
+	
+	//get connection to DB
+	public Connection getConnection(){
+
+		Connection conn = null;
+		try{
+		    Class.forName("com.mysql.jdbc.Driver");
+		    conn = DriverManager.getConnection(this.dbUrl,this.userName,this.password);
+		}catch (SQLException | ClassNotFoundException ex) {
+		    System.out.println("Not connected to database");
+		} 
+	    return conn;
+	}
+	
+	//singelton getter
+	public static DBConnector getInstance() {
+		if (instance == null) {
+			instance = new DBConnector();
+			if(usernameFree(adminName)){
+				try {
+					addNewUser(adminName,adminPwd,3);
+				} catch (ClassNotFoundException e) {
+					System.out.println("Adding admin failed - 1");
+					e.printStackTrace();
+				} catch (SQLException e) {
+					System.out.println("Adding admin failed - 2");
+					e.printStackTrace();
+				}
+			}
+			if(usernameFree(teacherName)){
+				try {
+					addNewUser(teacherName,teacherPwd,2);
+				} catch (ClassNotFoundException e) {
+					System.out.println("Adding teacher failed - 1");
+					e.printStackTrace();
+				} catch (SQLException e) {
+					System.out.println("Adding teacher failed - 2");
+					e.printStackTrace();
+				}
+			}
+		}
+		return instance;
+	}
+
+	///Methods for User-DB
+	//check if username already exists
+	public static boolean usernameFree(String name){
+		
+		/*
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+        Session session = sessionFactory.openSession(); 
+        
+        String hql = "from User where name = '"+name+"'";
+        Query query = session.createQuery(hql);
+        @SuppressWarnings("unchecked")
+		List<User> listUser = query.list();
+        
+        if(listUser.size()==0){
+        	return(true);
+        }
+		*/
+		return true;
+	}
+	
+	//add new user
+	public static void addNewUser(String name,String pwd, Integer accessLevel) throws SQLException, ClassNotFoundException{
+		/*
+		if(usernameFree(name)){
+			System.out.println("Adding new user");
+			
+	        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
+	        Session session = sessionFactory.openSession();  
+	        session.beginTransaction();  
+	          
+	        User user = new User();  
+	        user.setName(name);
+	        user.setPwd(pwd);
+	        user.setAccessLevel(accessLevel);
+	          
+	        session.save(user);  
+	        session.getTransaction().commit();  
+	          
+	        session.close(); 
+		}
+		else{
+			System.out.println("Adding new user not possible - username already exists!");
+		}
+		*/
+	}
+	
+	public void createTable(String type){
+        String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "CREATE TABLE IF NOT EXISTS Users (" 
+	                    + "userid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator TEXT," 
+	                    + "name TEXT,"  
+	                    + "usergroup INT(2),"  
+	                    + "password TEXT,"
+	                    + "PRIMARY KEY (userid))"; 
+	            break;
+	        case "competences":
+	            usertable += "CREATE TABLE IF NOT EXISTS Competences (" 
+	                    + "competenceid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator TEXT," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    + "PRIMARY KEY (competenceid))"; 
+	            break;
+	        case "tasks":
+	            usertable += "CREATE TABLE IF NOT EXISTS Tasks (" 
+	                    + "taskid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator TEXT," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    + "text TEXT,"  
+	                    + "answer TEXT,"
+	                    + "PRIMARY KEY (taskid))"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "CREATE TABLE IF NOT EXISTS Competencestructure (" 
+	                    + "competencestructureid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator TEXT," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    + "PRIMARY KEY (competencestructureid))"; 
+	            break;
+	        case "classes":
+	            usertable += "CREATE TABLE IF NOT EXISTS Classes (" 
+	                    + "classid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator TEXT," 
+	                    + "name TEXT,"  
+	                    + "describtion TEXT,"  
+	                    + "visibility TEXT,"
+	                    + "PRIMARY KEY (classid))"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "CREATE TABLE IF NOT EXISTS Competencevalues (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "studentid INT(64) NOT NULL," 
+	                    + "classid INT(64) NOT NULL,"  
+	                    + "competenceid INT(64) NOT NULL,"  
+	                    + "value DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (studentid) REFERENCES Users(userid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (classid) REFERENCES Classes(classid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (competenceid) REFERENCES Competences(competenceid) ON DELETE CASCADE)";
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "CREATE TABLE IF NOT EXISTS Linkagetaskcompetence (" 
+	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "taskid INT(64) NOT NULL,"  
+	                    + "competenceid INT(64) NOT NULL,"  
+	                    + "weight DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (taskid) REFERENCES Tasks(taskid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (competenceid) REFERENCES Competences(competenceid) ON DELETE CASCADE)";
+	            break;
+	        case "competenceweight":
+	            usertable += "CREATE TABLE IF NOT EXISTS Competenceweight (" 
+	                    + "fromcompetenceid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "tocompetenceid INT(64) NOT NULL,"  
+	                    + "cstructureid INT(64) NOT NULL,"  
+	                    + "weight DOUBLE,"
+	                    + "PRIMARY KEY (id),"
+	                    + "FOREIGN KEY (fromcompetenceid) REFERENCES Competences(competenceid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (tocompetenceid) REFERENCES Competences(competenceid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (cstructureid) REFERENCES competencestructures(competencestructureid) ON DELETE CASCADE)";
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = this.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when creating table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public void createTable(){
+		for(int i=0;i<this.tableIdentifier.length;i++)
+			createTable(this.tableIdentifier[i]);
+	}
+	
+	public void truncateTable(String type){
+		String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "TRUNCATE TABLE Users"; 
+	            break;
+	        case "competences":
+	            usertable += "TRUNCATE TABLE Competences"; 
+	            break;
+	        case "tasks":
+	            usertable += "TRUNCATE TABLE Tasks"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "TRUNCATE TABLE Competencestructure"; 
+	            break;
+	        case "classes":
+	            usertable += "TRUNCATE TABLE Classes"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "TRUNCATE TABLE Competencevalues"; 
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "TRUNCATE TABLE Linkagetaskcompetence"; 
+	            break;
+	        case "competenceweight":
+	            usertable += "TRUNCATE TABLE Competenceweight"; 
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = this.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when truncating table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public void truncateTable(){
+		for(int i=this.tableIdentifier.length-1;i>=0;i--)
+			truncateTable(this.tableIdentifier[i]);
+	}
+	
+	public void createEmptyTable(String type){
+		dropTable(type);
+		createTable(type);
+	}
+	
+	public void createEmptyTable(){
+		for(int i=0;i<this.tableIdentifier.length;i++)
+			createEmptyTable(this.tableIdentifier[i]);
+	}
+	
+	public void dropTable(String type){
+		String usertable = "";
+        
+        switch(type){
+	        case "users":
+	            usertable += "DROP TABLE IF EXISTS Users"; 
+	            break;
+	        case "competences":
+	            usertable += "DROP TABLE IF EXISTS Competences"; 
+	            break;
+	        case "tasks":
+	            usertable += "DROP TABLE IF EXISTS Tasks"; 
+	            break;
+	        case "competencestructures":
+	            usertable += "DROP TABLE IF EXISTS Competencestructure"; 
+	            break;
+	        case "classes":
+	            usertable += "DROP TABLE IF EXISTS Classes"; 
+	            break;
+	        case "competencevalues":
+	            usertable += "DROP TABLE IF EXISTS Competencevalues"; 
+	            break;
+	        case "linkagetaskcompetence":
+	            usertable += "DROP TABLE IF EXISTS Linkagetaskcompetence"; 
+	            break;
+	        case "competenceweight":
+	            usertable += "DROP TABLE IF EXISTS Competenceweight"; 
+	            break;
+	        default:
+	        	System.out.println("Table type "+type+" unknown!");
+	        	return;
+        }
+        
+        try {
+            Connection con = this.getConnection();
+            Statement statement = (Statement) con.createStatement();
+			statement.executeUpdate(usertable);
+			con.close();
+		} catch (SQLException e) {
+			System.out.println("Error when dropping table "+type+"!");
+			e.printStackTrace();
+		}
+	}
+
+	public void dropTable(){
+		for(int i=this.tableIdentifier.length-1;i>=0;i--)
+			dropTable(this.tableIdentifier[i]);
+	}
+}

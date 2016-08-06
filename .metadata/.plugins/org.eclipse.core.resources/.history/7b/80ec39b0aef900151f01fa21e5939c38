@@ -1,0 +1,19 @@
+function SessionInformation(){
+	this.menuDiv = 'menudiv';
+	this.bodyDiv = 'bodydiv';
+	this.user = new User();
+	this.getAccessLevelUrl = "http://localhost:8080/test2/rest/getAccessLevel";
+	this.postCompetenceStructureUrl = "http://localhost:8080/test2/rest/saveCompetenceStructure";
+	this.getGETRequestUrlAdding = function(){
+		return("?name="+this.user.name+"&pwd="+this.user.pwd);
+	};
+	this.getAccessLevelUrlIdentificated = function(){
+		return(this.getAccessLevelUrl+this.getGETRequestUrlAdding());
+	};
+}
+
+function User(name,pwd) {
+	this.name=name;
+	this.pwd=pwd;
+	this.accessLevel=0;
+}

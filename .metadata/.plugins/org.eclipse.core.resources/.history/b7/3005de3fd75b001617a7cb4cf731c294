@@ -1,0 +1,10 @@
+package knowledgestructureelements;
+
+public class CompetenceStructure {
+	public Competence[] competences;
+	
+	
+	public addCompetence(Competence competence){
+		
+	}
+}

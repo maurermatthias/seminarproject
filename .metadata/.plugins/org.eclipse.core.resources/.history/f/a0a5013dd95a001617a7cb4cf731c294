@@ -1,0 +1,19 @@
+package entities;
+
+public enum Usergroup {
+	UNKNOWN, STUDENT, TEACHER, ADMINISTRATOR;
+	
+    public static Usergroup fromInteger(int x) {
+        switch(x) {
+        case 0:
+            return UNKNOWN;
+        case 1:
+            return STUDENT;
+        case 2:
+            return TEACHER;
+        case 3:
+            return ADMINISTRATOR;
+        }
+        return null;
+    }
+}

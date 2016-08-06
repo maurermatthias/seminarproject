@@ -1,0 +1,47 @@
+package knowledgestructureelements;
+
+import java.util.List;
+
+public class Competence {
+	
+	public String name;
+	public List<Edge> prerequisites;
+	public List<Edge> successors;
+		
+	public Competence(){}
+	
+	public Competence(String name){
+		this.name = name;
+	}
+	
+	public Competence getPrerequisiteCompetence(String name){
+		for(Edge edge:prerequisites)
+			if(edge.from.name.equals(name))
+				return edge.from;
+		return null;
+	}
+	
+	public Competence getSuccessorCompetence(String name){
+		for(Edge edge:successors)
+			if(edge.to.name.equals(name))
+				return edge.to;
+		return null;
+	}
+	
+	public boolean addPrerequisite(Edge edge){
+		if(getPrerequisiteCompetence(edge.from.name) == null){
+			prerequisites.add(edge);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean addSuccessor(Edge edge){
+		if(getSuccessorCompetence(edge.to.name) == null){
+			successors.add(edge);
+			return true;
+		}
+		return false;
+	}
+
+}
