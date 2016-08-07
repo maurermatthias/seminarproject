@@ -134,7 +134,7 @@ public class DBConnector {
 	//insert an database entity into a table
 	
 	//Executes an SQL command, returns the result-set, if command was SELECT
- 	public static void execute(String cmd){
+ 	public static void update(String cmd){
  		print("Executing command: "+cmd);
 		Statement stmt = null;
 
@@ -293,10 +293,12 @@ public class DBConnector {
 			e.printStackTrace();
 		}
 	}
+
 	public static void createTable(){
 		for(int i=0;i<DBConnector.tableIdentifier.length;i++)
 			createTable(DBConnector.tableIdentifier[i]);
 	}
+	
 	public static void truncateTable(String type){
 		String usertable = "";
         
@@ -349,20 +351,24 @@ public class DBConnector {
 			e.printStackTrace();
 		}
 	}
+
 	public static void truncateTable(){
 		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
 			truncateTable(DBConnector.tableIdentifier[i]);
 	}
+	
 	public static void createEmptyTable(String type){
 		dropTable(type);
 		createTable(type);
 	}
+	
 	public static void createEmptyTable(){
 		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
 			dropTable(DBConnector.tableIdentifier[i]);
 		for(int i=0;i<DBConnector.tableIdentifier.length;i++)
 			createTable(DBConnector.tableIdentifier[i]);
 	}
+	
 	public static void dropTable(String type){
 		String usertable = "";
         
@@ -415,6 +421,7 @@ public class DBConnector {
 			e.printStackTrace();
 		}
 	}
+
 	public static void dropTable(){
 		for(int i=DBConnector.tableIdentifier.length-1;i>=0;i--)
 			dropTable(DBConnector.tableIdentifier[i]);
@@ -602,54 +609,64 @@ public class DBConnector {
 		}
 		return entities;
 	}
+
 	public static List<DBentity> getAvailableClasses(int creatorid){
 		List<DBentity> entities = select("classes","creator='"+creatorid+"' OR visibility=0");
 		return entities;
 	}
-	public static int getUserId(String name){
+	
+	private static int getUserId(String name){
 		List<DBentity> entities = select("users","name='"+name+"'");
 		if(entities.isEmpty())
 			return 0;
 		else 
 			return ((DBuser)entities.get(0)).userid;
 	}
-	public static DBuser getUserById(int id){
+	
+	private static DBuser getUserById(int id){
 		List<DBentity> entity = select("users","userid="+id);
 		if(entity.isEmpty())
 			return null;
 		else
 			return ((DBuser) entity.get(0));
 	}
-	public static DBclass getClassById(int id){
+	
+	private static DBclass getClassById(int id){
 		List<DBentity> entity = select("classes","classid="+id);
 		if(entity.isEmpty())
 			return null;
 		else
 			return ((DBclass) entity.get(0));
 	}
-	public static int getClassIdByName(String name){
+	
+	private static int getClassIdByName(String name){
 		List<DBentity> entities = select("classes","name='"+name+"'");
 		if(entities.isEmpty())
 			return 0;
 		else 
 			return ((DBclass)entities.get(0)).classid;
 	}
+	
 	public static List<DBentity> getAllUsers(){
 		List<DBentity> entities = select("users","usergroup<6 ORDER BY usergroup DESC");
 		return entities;
 	}
+	
 	public static List<DBentity> getAllStudents(){
 		List<DBentity> entities = select("users","usergroup=1");
 		return entities;
 	}
+
 	public static List<DBentity> getAllTeacher(){
 		List<DBentity> entities = select("users","usergroup=2");
 		return entities;
 	}
+
 	public static List<DBentity> getAllAdministartors(){
 		List<DBentity> entities = select("users","usergroup=3");
 		return entities;
 	}
+	
 	public static List<DBentity> getClassesByTeacherId(int teacherId){
 		List<DBentity> entities = select("classes","creator="+teacherId);
 		return entities;
@@ -666,18 +683,7 @@ public class DBConnector {
 		List<DBentity> entities = select("tasks","creator="+teacherId);
 		return entities;
 	}
-	public static List<DBentity> getVisibleCompetencesByTeacherId(int teacherId){
-		List<DBentity> entities = select("competences","creator!="+teacherId+" AND visibility=0");
-		return entities;
-	}
-	public static List<DBentity> getVisibleCstructureByTeacherId(int teacherId){
-		List<DBentity> entities = select("competencestructures","creator!="+teacherId+" AND visibility=0");
-		return entities;
-	}
-	public static List<DBentity> getVisibleTasksByTeacherId(int teacherId){
-		List<DBentity> entities = select("tasks","creator!="+teacherId+" AND visibility=0");
-		return entities;
-	}
+	
 	public static List<DBentity> getRegisteredStudentsByClassId(int classId){
 		List<DBentity> entities = select("registeredstudents","classid="+classId);
 		List<DBentity> users = new ArrayList<DBentity>();
@@ -686,10 +692,12 @@ public class DBConnector {
 		}
 		return users;
 	}
-	public static List<DBentity> getCreatedStudentsByCreatorId(int creatorId){
+	
+	public static List<DBentity>  getCreatedStudentsByCreatorId(int creatorId){
 		List<DBentity> entities = select("users","creator="+creatorId);
 		return entities;
 	}
+	
 	public static int getCstructureIdByName(String name){
 		List<DBentity> entities = select("competencestructures","name='"+name+"'");
 		if(entities.isEmpty())
@@ -754,20 +762,6 @@ public class DBConnector {
 		
 		return compStr;
 	}
-	public static int getCstructureIdByClassId(int id){
-		List<DBentity> entities = select("linkageclasscstructure","classid="+id);
-		if(entities.isEmpty())
-			return 0;
-		else 
-			return ((DBlinkageclasscstructure)entities.get(0)).cstrutureid;
-	}
-	public static double getCompetenceValue(int studentid,int classid,int competenceid){
-		List<DBentity> entities = select("competencevalues","classid="+classid+" AND studentid="+studentid+" AND competenceid="+competenceid);
-		if(entities.isEmpty())
-			return -1.0;
-		else 
-			return ((DBcompetencevalue)entities.get(0)).value;
-	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                    Insert data
@@ -785,67 +779,67 @@ public class DBConnector {
 		    	DBuser u = (DBuser) entity;
 		    	cmd += "(usergroup,name,creator,password) VALUES ";
 		    	cmd += "("+u.usergroup+",'"+u.name+"',"+u.creator+",'"+u.password+"');";
-		    	execute(cmd);
+	        	update(cmd);
 		    	break;
 		    case "competencevalues":
 		    	DBcompetencevalue cv = (DBcompetencevalue) entity;
 		    	cmd += "(competenceid,classid,studentid,value) VALUES ";
 		    	cmd += "("+cv.competenceid+","+cv.classid+","+cv.studentid+","+cv.value+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "competences":
 		    	DBcompetence c = (DBcompetence) entity;
 		    	cmd += "(creator,name,description,visibility) VALUES ";
 		    	cmd += "('"+c.creator+"','"+c.name+"','"+c.description+"',"+Visibility.toInteger(c.visibility)+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "tasks":
 		    	DBtask t = (DBtask) entity;
 		    	cmd += "(creator,name,description,visibility,text,answer) VALUES ";
 		    	cmd += "("+t.creator+",'"+t.name+"','"+t.description+"',"+Visibility.toInteger(t.visibility)+",'"+t.text+"','"+t.answer+"');";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "linkagetaskcompetence":
 		    	DBlinkagetaskcompetence ltc = (DBlinkagetaskcompetence) entity;
 		    	cmd += "(taskid,competenceid,weight) VALUES ";
 		    	cmd += "("+ltc.taskid+","+ltc.competenceid+","+ltc.weight+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "competencestructures":
 		    	DBcompetencestructure cs = (DBcompetencestructure) entity;
 		    	cmd += "(creator,name,description,visibility) VALUES ";
 		    	cmd += "("+cs.creator+",'"+cs.name+"','"+cs.description+"',"+Visibility.toInteger(cs.visibility)+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "competenceweights":
 		    	DBcompetenceweight cw = (DBcompetenceweight) entity;
 		    	cmd += "(fromcompetenceid,tocompetenceid,cstructureid,weight) VALUES ";
 		    	cmd += "("+cw.fromcompetenceid+","+cw.tocompetenceid+","+cw.cstructureid+","+cw.weight+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "classes":
 		    	DBclass cl = (DBclass) entity;
 		    	cmd += "(creator,name,description,visibility) VALUES ";
 		    	cmd += "("+cl.creator+",'"+cl.name+"','"+cl.description+"',"+Visibility.toInteger(cl.visibility)+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "linkageclasstask":
 		    	DBlinkageclasstask lct = (DBlinkageclasstask) entity;
 		    	cmd += "(taskid,classid) VALUES ";
 		    	cmd += "("+lct.taskid+","+lct.classid+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "linkageclasscstructure":
 		    	DBlinkageclasscstructure lcc = (DBlinkageclasscstructure) entity;
 		    	cmd += "(cstructureid,classid) VALUES ";
 		    	cmd += "("+lcc.cstrutureid+","+lcc.classid+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 		    case "registeredstudents":
 		    	DBregisteredstudent rs = (DBregisteredstudent) entity;
 		    	cmd += "(studentid,classid) VALUES ";
 		    	cmd += "("+rs.studentid+","+rs.classid+");";
-		    	execute(cmd);
+		    	update(cmd);
 		    	break;
 	    }
 	}
@@ -955,14 +949,14 @@ public class DBConnector {
 		}
 	}
 	public static boolean addNewClassCstructureLink(DBlinkageclasscstructure lcc){
-		List<DBentity> entity = select("linkageclasscstructure","classid="+lcc.classid);
+		List<DBentity> entity = select("linkageclasscstructure","classid="+lcc.classid+" AND cstructureid="+lcc.cstrutureid);
 		if(entity.isEmpty()){
 			insert("linkageclasscstructure",lcc);
 			print("Class and Competencestructure linked together.");
 			return true;
 		}
 		else{
-			print("Class  already linked to a Competencestructure.");
+			print("Class and Competencestructure already linked together.");
 			return false;
 		}
 	}
@@ -977,34 +971,6 @@ public class DBConnector {
 			print("Class and task already linked together.");
 			return false;
 		}
-	}
-	public static boolean addNewCompetenceValue(DBcompetencevalue cvalue){
-		List<DBentity> entity = select("competencevalues","studentid="+cvalue.studentid+" AND classid="+cvalue.classid+" AND competenceid="+cvalue.competenceid);
-		if(entity.isEmpty()){
-			insert("competencevalues",cvalue);
-			print("Competencevalue inserted.");
-			return true;
-		}
-		else{
-			print("Competencevalue already exists!");
-			return false;
-		}
-	}
-	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	//                    Change data
-	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	
-	public static void update(String table, String set, String where){
-		if(!Arrays.asList(DBConnector.tableIdentifier).contains(table))
-			print("table identifier unknown!");
-		
-		String cmd = "UPDATE "+table+" SET "+ set + " WHERE " + where +";";
-		execute(cmd);
-		
-	}
-	public static void updateCompetenceValue(DBcompetencevalue cvalue){
-		update("competencevalues","value="+cvalue.value,"studentid="+cvalue.studentid+
-				" AND classid="+cvalue.classid+" AND competenceid="+cvalue.competenceid);
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++

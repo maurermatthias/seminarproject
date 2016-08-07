@@ -46,4 +46,25 @@ public class CompetenceStructure {
 			str += competence.getDiagnosticString();
 		return str;
 	}
+	
+	public List<Competence> getAllIndirectPrerequisites(Competence competence){
+		if(competence.prerequisites.size()==0)
+			return new ArrayList<Competence>();
+		List<Competence> prerequisites = new ArrayList<Competence>();
+		for(Edge edge : competence.prerequisites){
+			if(!prerequisites.contains(edge.from)){
+				prerequisites.add(edge.from);
+				for(Competence prereq : getAllIndirectPrerequisites(edge.from)){
+					if(!prerequisites.contains(prereq)){
+						prerequisites.add(prereq);
+					}
+				}
+			}
+		}
+		return prerequisites;
+	}
+	
+	public int getTotalNumberOfPrerequisites(Competence competence){
+		return getAllIndirectPrerequisites(competence).size();
+	}
 }
