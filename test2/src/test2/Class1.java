@@ -23,6 +23,8 @@ import javax.ws.rs.core.MediaType;
 // The browser requests per default the HTML MIME type.
 
 //Sets the path to base URL + /hello
+//http://192.168.178.51:8080/test2/rest/login?name=n&pwd=pwd
+//http://localhost:8080/test2/rest/login?name=n&pwd=pwd
 @Path("/")
 public class Class1 {
 
@@ -31,9 +33,10 @@ public class Class1 {
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.TEXT_PLAIN)
-	@Path("getAccessLevel")
+	@Path("login")
 	public String login(@QueryParam("name") String userName, @QueryParam("pwd") String pwd){
-		return null;
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return XMLCreator.prettyFormat(xmlc.getLoginXML());
 	}
 	
 	

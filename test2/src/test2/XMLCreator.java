@@ -19,6 +19,9 @@ import dbentities.DBclass;
 import dbentities.DBentity;
 import dbentities.DBuser;
 import dbentities.Usergroup;
+import dbentities.DBcompetence;
+import dbentities.DBcompetencestructure;
+import dbentities.DBtask;
 
 public class XMLCreator {
 	
@@ -32,7 +35,7 @@ public class XMLCreator {
 		List<DBentity> user = DBConnector.select("users", "name='"+username+"' AND password='"+password+"'");
 		
 		if(user.isEmpty()){
-			usergroup = Usergroup.fromInteger(((DBuser)user.get(0)).usergroup);
+			usergroup = Usergroup.fromInteger(0);
 			userId = 0;
 			creatorId = 0;
 		}
@@ -109,7 +112,47 @@ public class XMLCreator {
 		}
 		xml+="</createdstudents>";
 		
-		//add all competence stuff
+		xml += "<createdcompetences>";
+		List<DBentity> competences =  DBConnector.getCompetencesByTeacherId(this.userId);
+		for(DBentity competence : competences){
+			xml+=((DBcompetence) competence).toXML();
+		}
+		xml += "</createdcompetences>";
+		
+		xml+="<createdcstructures>";
+		List<DBentity> cstructures =  DBConnector.getCstructureByTeacherId(this.userId);
+		for(DBentity cstructure : cstructures){
+			xml+=((DBcompetencestructure) cstructure).toXML();
+		}
+		xml+="</createdcstructures>";
+		
+		xml+="<createdtasks>";
+		List<DBentity> tasks =  DBConnector.getTasksByTeacherId(this.userId);
+		for(DBentity task : tasks){
+			xml+=((DBtask) task).toXML();
+		}
+		xml+="</createdtasks>";
+		
+		xml += "<visiblecompetences>";
+		competences =  DBConnector.getVisibleCompetencesByTeacherId(this.userId);
+		for(DBentity competence : competences){
+			xml+=((DBcompetence) competence).toXML();
+		}
+		xml += "</visiblecompetences>";
+		
+		xml+="<visiblecstructures>";
+		cstructures =  DBConnector.getVisibleCstructureByTeacherId(this.userId);
+		for(DBentity cstructure : cstructures){
+			xml+=((DBcompetencestructure) cstructure).toXML();
+		}
+		xml+="</visiblecstructures>";
+		
+		xml+="<visibletasks>";
+		tasks =  DBConnector.getVisibleTasksByTeacherId(this.userId);
+		for(DBentity task : tasks){
+			xml+=((DBtask) task).toXML();
+		}
+		xml+="</visibletasks>";
 		
 		return xml+"</loginxml>";
 	}

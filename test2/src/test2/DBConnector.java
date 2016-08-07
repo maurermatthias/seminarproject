@@ -611,7 +611,7 @@ public class DBConnector {
 	}
 
 	public static List<DBentity> getAvailableClasses(int creatorid){
-		List<DBentity> entities = select("classes","creator='"+creatorid+"' OR visibility='all'");
+		List<DBentity> entities = select("classes","creator='"+creatorid+"' OR visibility=0");
 		return entities;
 	}
 	
@@ -671,6 +671,30 @@ public class DBConnector {
 		List<DBentity> entities = select("classes","creator="+teacherId);
 		return entities;
 	}
+	public static List<DBentity> getCompetencesByTeacherId(int teacherId){
+		List<DBentity> entities = select("competences","creator="+teacherId);
+		return entities;
+	}
+	public static List<DBentity> getCstructureByTeacherId(int teacherId){
+		List<DBentity> entities = select("competencestructures","creator="+teacherId);
+		return entities;
+	}
+	public static List<DBentity> getTasksByTeacherId(int teacherId){
+		List<DBentity> entities = select("tasks","creator="+teacherId);
+		return entities;
+	}
+	public static List<DBentity> getVisibleCompetencesByTeacherId(int teacherId){
+		List<DBentity> entities = select("competences","creator!="+teacherId+" AND visibility=0");
+		return entities;
+	}
+	public static List<DBentity> getVisibleCstructureByTeacherId(int teacherId){
+		List<DBentity> entities = select("competencestructures","creator!="+teacherId+" AND visibility=0");
+		return entities;
+	}
+	public static List<DBentity> getVisibleTasksByTeacherId(int teacherId){
+		List<DBentity> entities = select("tasks","creator!="+teacherId+" AND visibility=0");
+		return entities;
+	}
 	
 	public static List<DBentity> getRegisteredStudentsByClassId(int classId){
 		List<DBentity> entities = select("registeredstudents","classid="+classId);
@@ -681,7 +705,7 @@ public class DBConnector {
 		return users;
 	}
 	
-	public static List<DBentity>  getCreatedStudentsByCreatorId(int creatorId){
+	public static List<DBentity> getCreatedStudentsByCreatorId(int creatorId){
 		List<DBentity> entities = select("users","creator="+creatorId);
 		return entities;
 	}

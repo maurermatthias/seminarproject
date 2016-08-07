@@ -45,7 +45,7 @@ public class Demo{
         */
         
         
-        XMLCreator xmlcreator = new XMLCreator("teacher1","teacher1");
+        XMLCreator xmlcreator = new XMLCreator("n","pwd");
         String xml = XMLCreator.prettyFormat(xmlcreator.getLoginXML());
         System.out.println(xml);
         
