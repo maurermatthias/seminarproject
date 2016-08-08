@@ -5,6 +5,7 @@ import java.util.List;
 
 public class CompetenceStructure {
 	public List<Competence> competences = new ArrayList<Competence>();
+	private Boolean containsCircles = null;
 	
 	public boolean addEdge(String fromName, String toName, double weight){
 		Competence from = getCompetenceByName(fromName);
@@ -48,6 +49,11 @@ public class CompetenceStructure {
 	}
 	
 	public List<Competence> getAllIndirectPrerequisites(Competence competence){
+		if(containsCircles()){
+			System.out.println("Method getAllIndirectPrerequisites not callable - structure contains circles!");
+			return null;
+		}
+		
 		if(competence.prerequisites.size()==0)
 			return new ArrayList<Competence>();
 		List<Competence> prerequisites = new ArrayList<Competence>();
@@ -66,5 +72,25 @@ public class CompetenceStructure {
 	
 	public int getTotalNumberOfPrerequisites(Competence competence){
 		return getAllIndirectPrerequisites(competence).size();
+	}
+
+	public boolean containsCircles(){
+		if(containsCircles != null)
+			return containsCircles;
+		for(Competence competence : competences){
+			List<Competence> allPrerequisites = new ArrayList<Competence>();
+			allPrerequisites.add(competence);
+			while(allPrerequisites.size()>0){
+				Competence comp = allPrerequisites.remove(0);
+				if(comp.equals(competence)){
+					containsCircles=true;
+					return true;
+				}
+				for(Edge edge : comp.prerequisites)
+					allPrerequisites.add(edge.from);
+			}
+		}
+		containsCircles= false;
+		return false;
 	}
 }

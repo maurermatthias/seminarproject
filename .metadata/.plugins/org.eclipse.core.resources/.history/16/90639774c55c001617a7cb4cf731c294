@@ -1,0 +1,7 @@
+package knowledgestructureelements;
+
+import java.util.HashMap;
+
+public class CompetenceState {
+	HashMap<String, double> map = new HashMap<String, double>();
+}

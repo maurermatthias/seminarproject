@@ -1,0 +1,31 @@
+package knowledgestructureelements;
+
+import java.util.HashMap;
+
+import test2.DBConnector;
+
+public class CompetenceState {
+	HashMap<Competence, Double> map = new HashMap<Competence, Double>();
+	public int cstructureId;
+	public int studentId;
+	
+	public CompetenceState(String userName, int classId){
+		this.studentId = DBConnector.getUserId(userName);
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		CompetenceStructure compStr = DBConnector.getCompetenceStructure(cstructureId);
+		loadCompetenceState();
+		//create initial competence state -> watch out when having circles!
+		for(Competence competence : compStr.competences){
+			map.put(competence,0.0);
+		}
+	}
+	
+	private boolean loadCompetenceState(){
+		return true;
+	}
+	
+	public boolean store(){
+		return true;
+	}
+	
+}
