@@ -51,7 +51,6 @@ public class Demo{
         System.out.println(sic.getDiagnosticString());
         //*/
         
-        
         /*
         Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
         System.out.println(clazz.getDiagnosticString());

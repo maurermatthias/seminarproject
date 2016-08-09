@@ -54,23 +54,11 @@ public class CompetenceState {
 		}
 	}
 	
-	public void store(){
+	private void store(){
 		for(Competence competence : compStr.competences){
 			Double value = map.get(competence);
 			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),value));
 		}
-	}
-	
-	public String toXML(){
-		String xml = "<competencestate>";
-		for (Map.Entry<Competence,Double> entry : map.entrySet()) {
-		    xml+= "<competencevalue>";
-		    xml += "<competence>"+entry.getKey().name+"</competence>";
-		    xml += "<value>"+entry.getValue().doubleValue()+"</value>";
-		    xml+= "</competencevalue>";
-		}
-		xml += "</competencestate>";
-		return xml;
 	}
 	
 	public String getDiagnosticString(){

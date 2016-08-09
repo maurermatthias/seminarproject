@@ -94,7 +94,7 @@ public class CompetenceStructure {
 		return false;
 	}
 
-	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate, Boolean success){
+	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate){
 		return null;
 	}
 }

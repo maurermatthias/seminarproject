@@ -19,7 +19,7 @@ public class StudentInClass {
 		return null;
 	}
 	
-	public void updateCompetenceState(int taskId, Boolean success){
-		competenceState = clazz.competenceStructure.updateCompetenceState(competenceState, success);
+	public void updateCompetenceState(int taskId, boolean success){
+		competenceState = clazz.competenceStructure.updateCompetenceState(competenceState success);
 	}
 }

@@ -51,6 +51,9 @@ public class Demo{
         System.out.println(sic.getDiagnosticString());
         //*/
         
+        int a=1;
+        a=t(a);
+        System.out.println(""+a);
         
         /*
         Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
@@ -75,5 +78,9 @@ public class Demo{
         
 
         System.out.println("END");
+    }
+    
+    public static int t(int a){
+    	return a+1;
     }
 }

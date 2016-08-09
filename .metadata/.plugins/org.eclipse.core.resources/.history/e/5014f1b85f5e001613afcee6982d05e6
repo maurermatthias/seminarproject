@@ -93,8 +93,4 @@ public class CompetenceStructure {
 		containsCircles= false;
 		return false;
 	}
-
-	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate, Boolean success){
-		return null;
-	}
 }

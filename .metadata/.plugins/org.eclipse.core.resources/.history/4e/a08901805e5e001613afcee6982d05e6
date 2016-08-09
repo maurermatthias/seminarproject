@@ -62,15 +62,7 @@ public class CompetenceState {
 	}
 	
 	public String toXML(){
-		String xml = "<competencestate>";
-		for (Map.Entry<Competence,Double> entry : map.entrySet()) {
-		    xml+= "<competencevalue>";
-		    xml += "<competence>"+entry.getKey().name+"</competence>";
-		    xml += "<value>"+entry.getValue().doubleValue()+"</value>";
-		    xml+= "</competencevalue>";
-		}
-		xml += "</competencestate>";
-		return xml;
+		
 	}
 	
 	public String getDiagnosticString(){
