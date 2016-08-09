@@ -24,6 +24,8 @@ import dbentities.Usergroup;
 import dbentities.Visibility;
 import knowledgestructureelements.Competence;
 import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Task;
+import knowledgestructureelements.TaskCollection;
 
 import java.util.Arrays;
 
@@ -551,7 +553,7 @@ public class DBConnector {
 		        	while(rs.next()){
 		        		DBlinkageclasscstructure lcc = new DBlinkageclasscstructure();
 		        		lcc.id = rs.getInt("id");
-		        		lcc.cstrutureid = rs.getInt("cstrutureid");
+		        		lcc.cstructureid = rs.getInt("cstructureid");
 		        		lcc.classid = rs.getInt("classid");
 		        		results.add(lcc);
 		        	}
@@ -658,6 +660,10 @@ public class DBConnector {
 		List<DBentity> entities = select("competences","creator="+teacherId);
 		return entities;
 	}
+	public static List<DBentity> getCompetenceLinksToTaskById(int taskId){
+		List<DBentity> entities = select("linkagetaskcompetence","taskid="+taskId);
+		return entities;
+	}
 	public static List<DBentity> getCstructureByTeacherId(int teacherId){
 		List<DBentity> entities = select("competencestructures","creator="+teacherId);
 		return entities;
@@ -665,6 +671,12 @@ public class DBConnector {
 	public static List<DBentity> getTasksByTeacherId(int teacherId){
 		List<DBentity> entities = select("tasks","creator="+teacherId);
 		return entities;
+	}
+	public static DBtask getTaskById(int taskId){
+		List<DBentity> entities = select("tasks","taskid="+taskId);
+		if(entities.isEmpty())
+			return null;
+		return (DBtask) entities.get(0);
 	}
 	public static List<DBentity> getVisibleCompetencesByTeacherId(int teacherId){
 		List<DBentity> entities = select("competences","creator!="+teacherId+" AND visibility=0");
@@ -703,6 +715,13 @@ public class DBConnector {
 			return 0;
 		else 
 			return ((DBcompetence)entities.get(0)).competenceid;
+	}
+	public static String getCompetenceNameById(int id){
+		List<DBentity> entities = select("competences","competenceid='"+id+"'");
+		if(entities.isEmpty())
+			return null;
+		else 
+			return ((DBcompetence)entities.get(0)).name;
 	}
 	public static int getTaskIdByName(String name){
 		List<DBentity> entities = select("tasks","name='"+name+"'");
@@ -754,12 +773,20 @@ public class DBConnector {
 		
 		return compStr;
 	}
+	public static TaskCollection getTaskCollectionByClassId(int classId, CompetenceStructure competenceStructure){
+		List<DBentity> tasklinks = select("linkageclasstask","classid="+classId);
+		TaskCollection tc = new TaskCollection();
+		for(DBentity task : tasklinks){
+			tc.addTask(new Task(((DBlinkageclasstask) task).taskid,competenceStructure));
+		}
+		return tc;
+	}
 	public static int getCstructureIdByClassId(int id){
 		List<DBentity> entities = select("linkageclasscstructure","classid="+id);
 		if(entities.isEmpty())
 			return 0;
 		else 
-			return ((DBlinkageclasscstructure)entities.get(0)).cstrutureid;
+			return ((DBlinkageclasscstructure)entities.get(0)).cstructureid;
 	}
 	public static double getCompetenceValue(int studentid,int classid,int competenceid){
 		List<DBentity> entities = select("competencevalues","classid="+classid+" AND studentid="+studentid+" AND competenceid="+competenceid);
@@ -838,7 +865,7 @@ public class DBConnector {
 		    case "linkageclasscstructure":
 		    	DBlinkageclasscstructure lcc = (DBlinkageclasscstructure) entity;
 		    	cmd += "(cstructureid,classid) VALUES ";
-		    	cmd += "("+lcc.cstrutureid+","+lcc.classid+");";
+		    	cmd += "("+lcc.cstructureid+","+lcc.classid+");";
 		    	execute(cmd);
 		    	break;
 		    case "registeredstudents":

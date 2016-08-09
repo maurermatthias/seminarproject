@@ -19,6 +19,7 @@ import org.xml.sax.InputSource;
 
 import dbentities.DBtask;
 import dbentities.DBuser;
+import knowledgestructureelements.Clazz;
 import knowledgestructureelements.CompetenceStructure;
 import test2.DBConnector;
 import test2.XMLCreator;
@@ -42,13 +43,18 @@ public class Demo{
         /*
         CompetenceStructure cstruct = DBConnector.getCompetenceStructure(DBConnector.getCstructureIdByName("CS1"));
         System.out.println(cstruct.getDiagnosticString());
-        */
+        //*/
         
+        ///*
+        Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
+        System.out.println(clazz.getDiagnosticString());
+        //*/
         
+        /*
         XMLCreator xmlcreator = new XMLCreator("n","pwd");
         String xml = XMLCreator.prettyFormat(xmlcreator.getLoginXML());
         System.out.println(xml);
-        
+        */
         
         /*
         DBuser user = new DBuser();
