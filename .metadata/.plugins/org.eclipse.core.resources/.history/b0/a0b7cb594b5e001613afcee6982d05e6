@@ -1,0 +1,11 @@
+package knowledgestructureelements;
+
+public class StudentInClass {
+	private Clazz clazz;
+	public CompetenceState competecneState;
+	
+	public StudentInClass(int classId, int userId){
+		this.clazz = new Clazz(classId);
+		this.competecneState = new CompetenceState(userId, clazz);
+	}
+}
