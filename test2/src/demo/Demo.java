@@ -21,6 +21,7 @@ import dbentities.DBtask;
 import dbentities.DBuser;
 import knowledgestructureelements.Clazz;
 import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.StudentInClass;
 import test2.DBConnector;
 import test2.XMLCreator;
 
@@ -46,6 +47,11 @@ public class Demo{
         //*/
         
         ///*
+        StudentInClass sic = new StudentInClass(DBConnector.getClassIdByName("class1"),DBConnector.getUserId("student1"));
+        System.out.println(sic.getDiagnosticString());
+        //*/
+        
+        /*
         Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
         System.out.println(clazz.getDiagnosticString());
         //*/

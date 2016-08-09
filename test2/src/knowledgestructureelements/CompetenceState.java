@@ -2,6 +2,7 @@ package knowledgestructureelements;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dbentities.DBcompetencevalue;
 import test2.DBConnector;
@@ -18,6 +19,14 @@ public class CompetenceState {
 		this.classId = classId;
 		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
 		compStr = DBConnector.getCompetenceStructure(cstructureId);
+		loadCompetenceState();
+	}
+	
+	public CompetenceState(int  userId, Clazz clazz){
+		this.studentId = userId;
+		this.classId = clazz.classId;
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		compStr = clazz.competenceStructure;
 		loadCompetenceState();
 	}
 	
@@ -52,4 +61,11 @@ public class CompetenceState {
 		}
 	}
 	
+	public String getDiagnosticString(){
+		String str = "Competence state:\n";
+		for (Map.Entry<Competence,Double> entry : map.entrySet()) {
+		    str+="    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
+		}
+		return str;
+	}
 }

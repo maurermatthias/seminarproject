@@ -33,9 +33,9 @@ public class Task {
 	
 	public String getDiagnosticString(){
 		String str = "";
-		str += "-> "+taskid+","+question+":"+answer;
+		str += "-> "+taskid+","+question+":"+answer+"\n";
 		for (Map.Entry<Competence,Double> entry : weights.entrySet()) {
-		    str+="\n    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
+		    str+="    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
 		}
 		return str;
 	}
