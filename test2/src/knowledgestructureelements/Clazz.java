@@ -1,0 +1,24 @@
+package knowledgestructureelements;
+
+import test2.DBConnector;
+
+public class Clazz {
+	public CompetenceStructure competenceStructure;
+	public TaskCollection taskCollection;
+	public int classId;
+	public int cstructureId;
+
+	public Clazz(int classId){
+		this.classId = classId;
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		this.competenceStructure = DBConnector.getCompetenceStructure(cstructureId);
+		this.taskCollection = DBConnector.getTaskCollectionByClassId(classId, competenceStructure);
+	}
+	
+	public String getDiagnosticString(){
+		String str = "***********************************************\nPrint Class:";
+		str += this.competenceStructure.getDiagnosticString();
+		str += this.taskCollection.getDiagnosticString();
+		return str+"***********************************************";
+	}
+}

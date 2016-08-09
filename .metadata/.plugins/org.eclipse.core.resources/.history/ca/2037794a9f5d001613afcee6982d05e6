@@ -1,0 +1,18 @@
+package knowledgestructureelements;
+
+import java.util.Map;
+
+public class Task {
+
+	public Map<Competence,Double> weights;
+	private String question;
+	private String answer;
+	private int taskid;
+	
+	private Task(){}
+	
+	public Task(int taskid){
+		this.taskid = taskid;
+	}
+	
+}

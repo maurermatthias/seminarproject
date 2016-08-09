@@ -1,0 +1,8 @@
+package knowledgestructureelements;
+
+public class Clazz {
+
+	public Clazz(int classId){
+		
+	}
+}

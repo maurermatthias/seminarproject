@@ -1,0 +1,8 @@
+package knowledgestructureelements;
+
+import java.util.Map;
+
+public class Task {
+
+	public Map<Competence,Double> weights;
+}

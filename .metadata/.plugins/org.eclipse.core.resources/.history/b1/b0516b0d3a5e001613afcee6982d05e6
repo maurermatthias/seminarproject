@@ -1,0 +1,31 @@
+package knowledgestructureelements;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import dbentities.DBtask;
+import test2.DBConnector;
+
+public class Task {
+
+	public Map<Competence,Double> weights;
+	public String question;
+	public String answer;
+	public int taskid;
+	
+	public Task(int taskid){
+		this.taskid = taskid;
+		DBtask dbtask = DBConnector.getTaskById(taskid);
+		question = dbtask.text;
+		answer = dbtask.answer;
+	}
+	
+	public String getDiagnosticString(){
+		String str = "";
+		str += "-> "+taskid+","+question+":"+answer;
+		for (Map.Entry<Competence,Double> entry : weights.entrySet()) {
+		    str+="\n-"+entry.getKey().name +"("+entry.getValue().doubleValue()+")";
+		}
+		return str;
+	}
+}

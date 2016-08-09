@@ -1,0 +1,10 @@
+package knowledgestructureelements;
+
+public class Clazz {
+	public CompetenceStructure competenceStructure;
+	public TaskCollection taskCollection;
+
+	public Clazz(int classId){
+		
+	}
+}

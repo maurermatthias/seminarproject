@@ -1,0 +1,22 @@
+package knowledgestructureelements;
+
+import java.util.Map;
+
+import dbentities.DBtask;
+import test2.DBConnector;
+
+public class Task {
+
+	public Map<Competence,Double> weights;
+	public String question;
+	public String answer;
+	public int taskid;
+	
+	public Task(int taskid){
+		this.taskid = taskid;
+		DBtask dbtask = DBConnector.getTaskById(taskid);
+		question = dbtask.text;
+		answer = dbtask.answer;
+	}
+	
+}
