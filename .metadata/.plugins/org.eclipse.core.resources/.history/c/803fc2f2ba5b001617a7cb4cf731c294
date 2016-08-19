@@ -1,9 +1,0 @@
-package entities;
-
-public class DBcompetenceweight extends DBentity{
-	public int id;
-	public int fromcompetenceid;
-	public int tocompetenceid;
-	public int cstructureid;
-	public double weight;
-}

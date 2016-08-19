@@ -1,9 +1,0 @@
-package entities;
-
-public class DBcompetencestructure extends DBentity{
-	public int cstructureid;
-	public int creator;
-	public String name;
-	public String description;
-	public String visibility;
-}

@@ -1,8 +1,0 @@
-package entities;
-
-public class DBlinkagetaskcompetence extends DBentity{
-	public int id;
-	public int taskid;
-	public int competenceid;
-	public double weight;
-}

@@ -1,7 +1,0 @@
-package entities;
-
-public class DBlinkageclasstask extends DBentity{
-	public int id;
-	public int taskid;
-	public int classid;
-}

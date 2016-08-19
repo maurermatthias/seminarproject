@@ -2,6 +2,8 @@ package dbentities;
 
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 @Root(name="user")
 public class DBuser extends DBentity {
@@ -23,6 +25,12 @@ public class DBuser extends DBentity {
 		this.password=password;
 		this.creator = creatorId;
 		this.usergroup = usergroup;
+	}
+	
+	public DBuser(Document doc){
+		this.name = doc.getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
+		this.password = doc.getElementsByTagName("password").item(0).getFirstChild().getNodeValue();
+		this.usergroup = Integer.parseInt(doc.getElementsByTagName("usergroup").item(0).getFirstChild().getNodeValue());
 	}
 }
 

@@ -1,7 +1,0 @@
-package knowledgestructureelements;
-
-public class Edge {
-	public double weight;
-	public Competence from;
-	public Competence to;
-}

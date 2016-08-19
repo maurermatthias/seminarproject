@@ -1,5 +1,7 @@
 package dbentities;
 
+import org.w3c.dom.Document;
+
 public class DBcompetencevalue extends DBentity {
 
 	public int id;
@@ -16,5 +18,6 @@ public class DBcompetencevalue extends DBentity {
 		this.competenceid = competenceid;
 		this.value = value;
 	}
+	
 	
 }

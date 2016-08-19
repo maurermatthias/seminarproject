@@ -9,5 +9,23 @@
 <fullyQualifiedTypeName name="javax.ws.rs.Consumes"/>
 <fullyQualifiedTypeName name="javax.ws.rs.FormParam"/>
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="dbentities.DBcompetencevalue"/>
+<fullyQualifiedTypeName name="java.util.Map"/>
+<fullyQualifiedTypeName name="dbentities.DBtask"/>
+<fullyQualifiedTypeName name="knowledgestructureelements.TaskCollection"/>
+<fullyQualifiedTypeName name="knowledgestructureelements.Task"/>
+<fullyQualifiedTypeName name="test2.DBConnector"/>
+<fullyQualifiedTypeName name="knowledgestructureelements.Clazz"/>
+<fullyQualifiedTypeName name="java.util.Iterator"/>
+<fullyQualifiedTypeName name="java.util.HashMap"/>
 <fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="dbentities.DBentity"/>
+<fullyQualifiedTypeName name="dbentities.DBlinkagetaskcompetence"/>
+<fullyQualifiedTypeName name="knowledgestructureelements.StudentInClass"/>
+<fullyQualifiedTypeName name="java.io.IOException"/>
+<fullyQualifiedTypeName name="javax.ws.rs.core.UriBuilder"/>
+<fullyQualifiedTypeName name="java.net.URI"/>
+<fullyQualifiedTypeName name="java.net.InetAddress"/>
+<fullyQualifiedTypeName name="java.net.UnknownHostException"/>
+<fullyQualifiedTypeName name="org.glassfish.jersey.server.ResourceConfig"/>
 </qualifiedTypeNameHistroy>

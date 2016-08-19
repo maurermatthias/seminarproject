@@ -1,9 +1,0 @@
-package entities;
-
-public class DBclass extends DBentity{
-	public int classid;
-	public int creator;
-	public String name;
-	public String description;
-	public String visibility;
-}

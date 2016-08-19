@@ -1,6 +1,0 @@
-package knowledgestructureelements;
-
-public class StudentInClass {
-	private Clazz clazz;
-	private CompetenceState competecneState;
-}

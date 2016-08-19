@@ -1,11 +1,16 @@
 package test2;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+import javax.lang.model.element.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -13,7 +18,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import dbentities.DBclass;
 import dbentities.DBentity;
@@ -45,6 +52,72 @@ public class XMLCreator {
 			if(usergroup == Usergroup.STUDENT)
 				creatorId = ((DBuser)user.get(0)).creator;
 		}
+	}
+	
+	public String postEntity(String xml) {
+		//System.out.print(xml);
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String type = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return postFail();
+		}
+				
+		boolean success = false;
+		switch(type){
+			case "user":
+				DBuser user = new DBuser(doc);
+				user.creator = this.userId;
+				success = DBConnector.addNewUser(user);
+				break;
+			case "task":
+				DBtask task = new DBtask(doc);
+				task.creator = this.creatorId;
+				success = DBConnector.addNewTask(task);
+				break;
+			case "class":
+				DBclass clazz = new DBclass(doc);
+				clazz.creator = this.creatorId;
+				success = DBConnector.addNewClass(clazz);
+				break;
+			case "competence":
+				DBcompetence competence = new DBcompetence(doc);
+				competence.creator = this.creatorId;
+				success = DBConnector.addNewCompetence(competence);
+				break;
+			case "competencestructure":
+				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
+				competencestructure.creator = this.creatorId;
+				success = DBConnector.addNewCompetenceStructure(competencestructure);
+				break;
+			default:
+				return postFail();
+		}
+		
+		
+		if(success)
+			return postSuccess();
+		else
+			return postFail();
+	}
+	
+	public String postSuccess(){
+		return "<post>success</post>";
+	}
+	
+	public String postFail(){
+		return "<post>fail</post>";
 	}
 	
 	public String getLoginXML(){

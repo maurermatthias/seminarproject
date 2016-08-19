@@ -1,5 +1,0 @@
-package entities;
-
-public enum Usergroup {
-	UNKNOWN, STUDENT, TEACHER, ADMINISTRATOR
-}

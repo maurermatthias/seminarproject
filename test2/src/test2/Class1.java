@@ -1,6 +1,7 @@
 package test2;
 
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -10,6 +11,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+
+
 
 
 
@@ -28,15 +33,34 @@ import javax.ws.rs.core.MediaType;
 @Path("/")
 public class Class1 {
 
+	//Method adding CORS header
+	private Response returnString(String str){
+		return Response.ok() //200
+				.entity(str,  new Annotation[0])
+				.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT")
+				.allow("OPTIONS").build();
+	}
 
 	//method returning xml with all data needed after the login
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("login")
-	public String login(@QueryParam("name") String userName, @QueryParam("pwd") String pwd){
+	public Response login(@QueryParam("name") String userName, @QueryParam("password") String pwd){
 		XMLCreator xmlc = new XMLCreator(userName,pwd);
-		return XMLCreator.prettyFormat(xmlc.getLoginXML());
+		//return XMLCreator.prettyFormat(xmlc.getLoginXML());
+		return returnString(XMLCreator.prettyFormat(xmlc.getLoginXML()));
+	}
+	
+	//method inserting a new entity to the database
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("postEntity")
+	public Response postEntity(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.postEntity(body)));
 	}
 	
 	

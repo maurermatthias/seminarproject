@@ -1,9 +1,0 @@
-package entities;
-
-public class UsersEntry {
-
-	public int id;
-	public String name;
-	public String password;
-	public int creator;
-}

@@ -1,5 +1,0 @@
-package knowledgestructureelements;
-
-public class CompetenceStructure {
-	public Competence[] competences;
-}
