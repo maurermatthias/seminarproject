@@ -42,7 +42,7 @@ public class XMLCreator {
 		List<DBentity> user = DBConnector.select("users", "name='"+username+"' AND password='"+password+"'");
 		
 		if(user.isEmpty()){
-			usergroup = Usergroup.fromInteger(0);
+			usergroup = Usergroup.UNKNOWN;
 			userId = 0;
 			creatorId = 0;
 		}
@@ -54,8 +54,75 @@ public class XMLCreator {
 		}
 	}
 	
+	public String deleteEntity(String xml){
+		//NOT WORKING AT THE MOMMENT....
+		
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return returnFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String type = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			e.printStackTrace();
+			return returnFail();
+		}
+		
+		boolean success = false;
+		switch(type){
+			case "user":
+				DBuser user = new DBuser(doc);
+				user.creator = this.userId;
+				//only administrators are allowed to delete teachers/administrators, can't delete yourself
+				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2) && userId != DBConnector.getUserId(user.name))
+					return returnFail();
+				
+				success = DBConnector.deleteUserByName(user.name);
+				break;
+			case "task":
+				DBtask task = new DBtask(doc);
+				task.creator = this.userId;
+				success = DBConnector.deleteTaskByName(task.name);
+				break;
+			case "class":
+				DBclass clazz = new DBclass(doc);
+				clazz.creator = this.userId;
+				success = DBConnector.deleteClassByName(clazz.name);
+				break;
+			case "competence":
+				DBcompetence competence = new DBcompetence(doc);
+				competence.creator = this.userId;
+				success = DBConnector.deleteCompetenceByName(competence.name);
+				break;
+			case "competencestructure":
+				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
+				competencestructure.creator = this.userId;
+				success = DBConnector.deleteCstructureByName(competencestructure.name);
+				break;
+			default:
+				return returnFail();
+		}
+		
+		
+		if(success)
+			return returnSuccess();
+		else
+			return returnFail();
+	}
+	
 	public String postEntity(String xml) {
 		//System.out.print(xml);
+		
+		if(usergroup == Usergroup.UNKNOWN)
+			return returnFail();
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -71,52 +138,59 @@ public class XMLCreator {
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return postFail();
+			return returnFail();
 		}
+		
+		//allow only special type to be submitted by student
+		if(usergroup == Usergroup.STUDENT)
+			return returnFail();
 				
 		boolean success = false;
 		switch(type){
 			case "user":
 				DBuser user = new DBuser(doc);
 				user.creator = this.userId;
+				//only administrators are allowed to register new teachers/administrators
+				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2))
+					return returnFail();
 				success = DBConnector.addNewUser(user);
 				break;
 			case "task":
 				DBtask task = new DBtask(doc);
-				task.creator = this.creatorId;
+				task.creator = this.userId;
 				success = DBConnector.addNewTask(task);
 				break;
 			case "class":
 				DBclass clazz = new DBclass(doc);
-				clazz.creator = this.creatorId;
+				clazz.creator = this.userId;
 				success = DBConnector.addNewClass(clazz);
 				break;
 			case "competence":
 				DBcompetence competence = new DBcompetence(doc);
-				competence.creator = this.creatorId;
+				competence.creator = this.userId;
 				success = DBConnector.addNewCompetence(competence);
 				break;
 			case "competencestructure":
 				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
-				competencestructure.creator = this.creatorId;
+				competencestructure.creator = this.userId;
 				success = DBConnector.addNewCompetenceStructure(competencestructure);
 				break;
 			default:
-				return postFail();
+				return returnFail();
 		}
 		
 		
 		if(success)
-			return postSuccess();
+			return returnSuccess();
 		else
-			return postFail();
+			return returnFail();
 	}
 	
-	public String postSuccess(){
+	public String returnSuccess(){
 		return "<post>success</post>";
 	}
 	
-	public String postFail(){
+	public String returnFail(){
 		return "<post>fail</post>";
 	}
 	

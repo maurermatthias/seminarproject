@@ -28,9 +28,12 @@ public class DBuser extends DBentity {
 	}
 	
 	public DBuser(Document doc){
-		this.name = doc.getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
-		this.password = doc.getElementsByTagName("password").item(0).getFirstChild().getNodeValue();
-		this.usergroup = Integer.parseInt(doc.getElementsByTagName("usergroup").item(0).getFirstChild().getNodeValue());
+		if(doc.getElementsByTagName("name").getLength()>0)
+			this.name = doc.getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
+		if(doc.getElementsByTagName("password").getLength()>0)
+			this.password = doc.getElementsByTagName("password").item(0).getFirstChild().getNodeValue();
+		if(doc.getElementsByTagName("usergroup").getLength()>0)
+			this.usergroup = Integer.parseInt(doc.getElementsByTagName("usergroup").item(0).getFirstChild().getNodeValue());
 	}
 }
 

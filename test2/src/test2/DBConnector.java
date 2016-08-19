@@ -1035,6 +1035,45 @@ public class DBConnector {
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//                    DELETE data
+	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	public static boolean delete(String table, String where){
+		if(!Arrays.asList(DBConnector.tableIdentifier).contains(table))
+			print("table identifier unknown!");
+		
+		String cmd = "DELETE FROM "+table+" WHERE " + where +";";
+		execute(cmd);
+		
+		return true;
+	}
+	public static boolean deleteUserByName(String name){
+		if(DBConnector.getUserId(name)==0)
+			return false;
+		return delete("users","name='"+name+"'");
+	}
+	public static boolean deleteClassByName(String name){
+		if(DBConnector.getClassIdByName(name)==0)
+			return false;
+		return delete("classes","name='"+name+"'");
+	}
+	public static boolean deleteTaskByName(String name){
+		if(DBConnector.getTaskIdByName(name)==0)
+			return false;
+		return delete("tasks","name='"+name+"'");
+	}
+	public static boolean deleteCompetenceByName(String name){
+		if(DBConnector.getCompetenceIdByName(name)==0)
+			return false;
+		return delete("competences","name='"+name+"'");
+	}
+	public static boolean deleteCstructureByName(String name){
+		if(DBConnector.getCstructureIdByName(name)==0)
+			return false;
+		return delete("competencestructures","name='"+name+"'");
+	}
+	
+	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                   Test Data
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	

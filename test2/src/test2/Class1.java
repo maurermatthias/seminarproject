@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -63,6 +64,15 @@ public class Class1 {
 		return returnString(XMLCreator.prettyFormat(xmlc.postEntity(body)));
 	}
 	
+	//delete entities
+	@DELETE
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("deleteEntity")
+	public Response deleteEntity(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.deleteEntity(body)));
+	}
 	
   /*
   

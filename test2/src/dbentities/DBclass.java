@@ -27,9 +27,12 @@ public class DBclass extends DBentity{
 	}
 	
 	public DBclass(Document doc){
-		this.name = doc.getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
-		this.description = doc.getElementsByTagName("description").item(0).getFirstChild().getNodeValue();
-		this.visibility =  (doc.getElementsByTagName("visibility").item(0).getFirstChild().getNodeValue().equals("ALL")) ? Visibility.ALL : Visibility.NOTALL;
+		if(doc.getElementsByTagName("name").getLength()>0)
+			this.name = doc.getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
+		if(doc.getElementsByTagName("description").getLength()>0)
+			this.description = doc.getElementsByTagName("description").item(0).getFirstChild().getNodeValue();
+		if(doc.getElementsByTagName("visibility").getLength()>0)
+			this.visibility =  (doc.getElementsByTagName("visibility").item(0).getFirstChild().getNodeValue().equals("ALL")) ? Visibility.ALL : Visibility.NOTALL;
 	}
 	
 }
