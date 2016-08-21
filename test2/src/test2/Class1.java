@@ -30,7 +30,7 @@ import javax.ws.rs.core.Response;
 
 //Sets the path to base URL + /hello
 //http://192.168.178.51:8080/test2/rest/login?name=n&pwd=pwd
-//http://localhost:8080/test2/rest/login?name=n&pwd=pwd
+//http://localhost:8080/test2/rest/login?name=n&password=pwd
 @Path("/")
 public class Class1 {
 
@@ -65,11 +65,12 @@ public class Class1 {
 	}
 	
 	//delete entities
-	@DELETE
+	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("deleteEntity")
 	public Response deleteEntity(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		System.out.println(body);
 		XMLCreator xmlc = new XMLCreator(userName,pwd);
 		return returnString(XMLCreator.prettyFormat(xmlc.deleteEntity(body)));
 	}

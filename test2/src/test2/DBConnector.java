@@ -512,7 +512,7 @@ public class DBConnector {
 		        		DBcompetencestructure cs = new DBcompetencestructure();
 		        		cs.cstructureid = rs.getInt("cstructureid");
 		        		cs.creator = rs.getInt("creator");
-		        		cs.name = rs.getString("creator");
+		        		cs.name = rs.getString("name");
 		        		cs.description = rs.getString("description");
 		        		cs.visibility = Visibility.fromInteger(rs.getInt("visibility"));
 		        		results.add(cs);
