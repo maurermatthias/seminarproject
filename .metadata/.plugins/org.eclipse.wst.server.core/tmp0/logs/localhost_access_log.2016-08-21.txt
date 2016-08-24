@@ -63,3 +63,4 @@
 192.168.178.52 - - [21/Aug/2016:10:03:34 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 2672
 192.168.178.52 - - [21/Aug/2016:10:03:37 +0200] "POST /test2/rest/deleteEntity?name=teacher1&password=teacher1 HTTP/1.1" 200 21
 192.168.178.52 - - [21/Aug/2016:10:03:40 +0200] "POST /test2/rest/deleteEntity?name=teacher1&password=teacher1 HTTP/1.1" 200 21
+192.168.178.52 - - [21/Aug/2016:10:08:36 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 2449

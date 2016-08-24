@@ -1,0 +1,17 @@
+package dbentities;
+
+public class DBlinkagetaskcompetence extends DBentity{
+	public int id;
+	public int taskid;
+	public int competenceid;
+	public double weight;
+	
+	
+	public DBlinkagetaskcompetence(){}
+	
+	public DBlinkagetaskcompetence(int taskid, int competenceid, double weight){
+		this.taskid = taskid;
+		this.competenceid = competenceid;
+		this.weight = weight;
+	}
+}

@@ -4,6 +4,8 @@ import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 import org.w3c.dom.Document;
 
+import test2.DBConnector;
+
 @Root(name="class")
 public class DBclass extends DBentity{
 	public int creator;
@@ -35,4 +37,17 @@ public class DBclass extends DBentity{
 			this.visibility =  (doc.getElementsByTagName("visibility").item(0).getFirstChild().getNodeValue().equals("ALL")) ? Visibility.ALL : Visibility.NOTALL;
 	}
 	
+	public String toXMLWithCstructure(){
+		String xml ="<class>";
+		xml+="<visibility>"+this.visibility+"</visibility>";
+		xml+="<name>"+this.name+"</name>";
+		xml+="<description>"+this.description+"</description>";
+		xml+="<id>"+this.classid+"</id>";
+		DBcompetencestructure cstruct =  DBConnector.getCStructureById(DBConnector.getCstructureIdByClassId(this.classid));
+		if(cstruct != null)
+			xml +="<competencestructure>"+cstruct.name+"</competencestructure>";
+		xml+="</class>";
+		
+		return xml;
+	}
 }

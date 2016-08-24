@@ -24,8 +24,10 @@ import org.xml.sax.SAXException;
 
 import dbentities.DBclass;
 import dbentities.DBentity;
+import dbentities.DBlinkagetaskcompetence;
 import dbentities.DBuser;
 import dbentities.Usergroup;
+import dbentities.Visibility;
 import dbentities.DBcompetence;
 import dbentities.DBcompetencestructure;
 import dbentities.DBtask;
@@ -55,10 +57,9 @@ public class XMLCreator {
 	}
 	
 	public String deleteEntity(String xml){
-		//NOT WORKING AT THE MOMMENT....
 		
 		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
-			return returnFail();
+			return deleteFail();
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -73,7 +74,7 @@ public class XMLCreator {
 			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			e.printStackTrace();
-			return returnFail();
+			return deleteFail();
 		}
 		
 		boolean success = false;
@@ -83,7 +84,7 @@ public class XMLCreator {
 				user.creator = this.userId;
 				//only administrators are allowed to delete teachers/administrators, can't delete yourself
 				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2) && userId != DBConnector.getUserId(user.name))
-					return returnFail();
+					return deleteFail();
 				
 				success = DBConnector.deleteUserByName(user.name);
 				break;
@@ -107,15 +108,53 @@ public class XMLCreator {
 				competencestructure.creator = this.userId;
 				success = DBConnector.deleteCstructureByName(competencestructure.name);
 				break;
+			case "linkagetaskcompetence":
+				DBlinkagetaskcompetence linkagetaskcompetence = new DBlinkagetaskcompetence(doc);
+				if(((DBtask) DBConnector.getTaskById(linkagetaskcompetence.taskid)).creator != this.userId){
+					System.out.println("This user cannot delete this linkage competence - task - it is not his task");
+					return deleteFail(type);
+				}
+				success = DBConnector.deleteLinkageTaskCompetence(linkagetaskcompetence.taskid,linkagetaskcompetence.competenceid);
+				break;
 			default:
-				return returnFail();
+				return deleteFail();
 		}
 		
 		
 		if(success)
-			return returnSuccess();
+			return deleteSuccess(type);
 		else
-			return returnFail();
+			return deleteFail(type);
+	}
+	
+	public String deleteFail(){
+		String xml ="<delete>";
+		xml+="<status>fail</status>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteSuccess(String type){
+		String xml ="<delete>";
+		xml+="<status>success</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteSuccess(){
+		String xml ="<delete>";
+		xml+="<status>success</status>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteFail(String type){
+		String xml ="<delete>";
+		xml+="<status>fail</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</delete>";
+		return(xml);
 	}
 	
 	public String postEntity(String xml) {
@@ -174,6 +213,20 @@ public class XMLCreator {
 				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
 				competencestructure.creator = this.userId;
 				success = DBConnector.addNewCompetenceStructure(competencestructure);
+				break;
+			case "linkagetaskcompetence":
+				DBlinkagetaskcompetence linkagetaskcompetence = new DBlinkagetaskcompetence(doc);
+				if(((DBtask) DBConnector.getTaskById(linkagetaskcompetence.taskid)).creator != this.userId){
+					System.out.println("This user cannot add a competence to this Task - it is not his task");
+					return returnFail();
+				}
+				DBcompetence dbc = (DBcompetence) DBConnector.getCompetenceById(linkagetaskcompetence.competenceid);
+				if(dbc.creator != this.userId && dbc.visibility != Visibility.ALL){
+					System.out.println("This user cannot add a competence to this Task - this task is private");
+					return returnFail();
+				}
+				success = DBConnector.addNewTaskCompetenceLink(linkagetaskcompetence);
+				System.out.println("WWW");
 				break;
 			default:
 				return returnFail();
@@ -248,7 +301,7 @@ public class XMLCreator {
 		xml+="<createdclasses>";
 		List<DBentity> clazzes = DBConnector.getClassesByTeacherId(this.userId);
 		for(DBentity clazz : clazzes){
-			xml+=((DBclass) clazz).toXML();
+			xml+=((DBclass) clazz).toXMLWithCstructure();
 		}
 		xml+="</createdclasses>";
 		
@@ -276,7 +329,7 @@ public class XMLCreator {
 		xml+="<createdtasks>";
 		List<DBentity> tasks =  DBConnector.getTasksByTeacherId(this.userId);
 		for(DBentity task : tasks){
-			xml+=((DBtask) task).toXML();
+			xml+=((DBtask) task).toXMLwithLinkage();
 		}
 		xml+="</createdtasks>";
 		

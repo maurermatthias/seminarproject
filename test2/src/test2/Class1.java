@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 //Sets the path to base URL + /hello
 //http://192.168.178.51:8080/test2/rest/login?name=n&pwd=pwd
 //http://localhost:8080/test2/rest/login?name=n&password=pwd
+//sudo service tomcat7 stop
 @Path("/")
 public class Class1 {
 

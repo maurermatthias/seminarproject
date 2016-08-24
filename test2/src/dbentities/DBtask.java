@@ -1,7 +1,11 @@
 package dbentities;
+import java.util.List;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 import org.w3c.dom.Document;
+
+import test2.DBConnector;
 
 @Root(name="task")
 public class DBtask extends DBentity{
@@ -28,6 +32,28 @@ public class DBtask extends DBentity{
 		this.answer = answer;
 		this.creator = creator;
 		this.visibility = visibility;
+	}
+	
+	public String toXMLwithLinkage(){
+		String xml ="<task>";
+		xml+="<name>"+this.name+"</name>";
+		xml+="<description>"+this.description+"</description>";
+		xml+="<text>"+this.text+"</text>";
+		xml+="<answer>"+this.answer+"</answer>";
+		
+		int taskId = DBConnector.getTaskIdByName(this.name);
+		List<DBentity> entities = DBConnector.getCompetenceLinksToTaskById(taskId);
+		xml+="<competencelinks>";
+		for(DBentity entity : entities){
+			xml+="<competencelink>";
+			xml+="<competence>"+DBConnector.getCompetenceNameById(((DBlinkagetaskcompetence)entity).competenceid)+"</competence>";
+			xml+="<weight>"+((DBlinkagetaskcompetence)entity).weight+"</weight>";
+			xml+="</competencelink>";
+		}
+		xml+="</competencelinks>";
+		
+		xml+="</task>";
+		return xml;
 	}
 	
 
