@@ -1,0 +1,519 @@
+package test2;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import javax.lang.model.element.Element;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import dbentities.DBclass;
+import dbentities.DBentity;
+import dbentities.DBlinkagetaskcompetence;
+import dbentities.DBuser;
+import dbentities.Usergroup;
+import dbentities.Visibility;
+import dbentities.DBcompetence;
+import dbentities.DBcompetencestructure;
+import dbentities.DBtask;
+
+public class XMLCreator {
+	
+	public int userId;
+	public Usergroup usergroup;
+	public int creatorId;
+	
+	private static int indentsize = 2;
+
+	public XMLCreator(String username, String password){
+		List<DBentity> user = DBConnector.select("users", "name='"+username+"' AND password='"+password+"'");
+		
+		if(user.isEmpty()){
+			usergroup = Usergroup.UNKNOWN;
+			userId = 0;
+			creatorId = 0;
+		}
+		else{
+			usergroup = Usergroup.fromInteger(((DBuser)user.get(0)).usergroup);
+			userId = ((DBuser)user.get(0)).userid;
+			if(usergroup == Usergroup.STUDENT)
+				creatorId = ((DBuser)user.get(0)).creator;
+		}
+	}
+	
+	public String deleteEntity(String xml){
+		
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return deleteFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String type = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			e.printStackTrace();
+			return deleteFail();
+		}
+		
+		boolean success = false;
+		switch(type){
+			case "user":
+				DBuser user = new DBuser(doc);
+				user.creator = this.userId;
+				//only administrators are allowed to delete teachers/administrators, can't delete yourself
+				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2) && userId != DBConnector.getUserId(user.name))
+					return deleteFail();
+				
+				success = DBConnector.deleteUserByName(user.name);
+				break;
+			case "task":
+				DBtask task = new DBtask(doc);
+				task.creator = this.userId;
+				success = DBConnector.deleteTaskByName(task.name);
+				break;
+			case "class":
+				DBclass clazz = new DBclass(doc);
+				clazz.creator = this.userId;
+				success = DBConnector.deleteClassByName(clazz.name);
+				break;
+			case "competence":
+				DBcompetence competence = new DBcompetence(doc);
+				competence.creator = this.userId;
+				success = DBConnector.deleteCompetenceByName(competence.name);
+				break;
+			case "competencestructure":
+				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
+				competencestructure.creator = this.userId;
+				success = DBConnector.deleteCstructureByName(competencestructure.name);
+				break;
+			case "linkagetaskcompetence":
+				DBlinkagetaskcompetence linkagetaskcompetence = new DBlinkagetaskcompetence(doc);
+				if(((DBtask) DBConnector.getTaskById(linkagetaskcompetence.taskid)).creator != this.userId){
+					System.out.println("This user cannot delete this linkage competence - task - it is not his task");
+					return deleteFail(type);
+				}
+				success = DBConnector.deleteLinkageTaskCompetence(linkagetaskcompetence.taskid,linkagetaskcompetence.competenceid);
+				break;
+			default:
+				return deleteFail();
+		}
+		
+		
+		if(success)
+			return deleteSuccess(type);
+		else
+			return deleteFail(type);
+	}
+	
+	public String deleteFail(){
+		String xml ="<delete>";
+		xml+="<status>failure</status>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteSuccess(String type){
+		String xml ="<delete>";
+		xml+="<status>success</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteSuccess(){
+		String xml ="<delete>";
+		xml+="<status>success</status>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String deleteFail(String type){
+		String xml ="<delete>";
+		xml+="<status>failure</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</delete>";
+		return(xml);
+	}
+	
+	public String postEntity(String xml) {
+		//System.out.print(xml);
+		
+		if(usergroup == Usergroup.UNKNOWN)
+			return postFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String type = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return postFail();
+		}
+		
+		//allow only special type to be submitted by student
+		if(usergroup == Usergroup.STUDENT)
+			return postFail();
+				
+		boolean success = false;
+		switch(type){
+			case "user":
+				DBuser user = new DBuser(doc);
+				user.creator = this.userId;
+				//only administrators are allowed to register new teachers/administrators
+				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2))
+					return postFail(type);
+				success = DBConnector.addNewUser(user);
+				break;
+			case "task":
+				DBtask task = new DBtask(doc);
+				task.creator = this.userId;
+				success = DBConnector.addNewTask(task);
+				break;
+			case "class":
+				DBclass clazz = new DBclass(doc);
+				clazz.creator = this.userId;
+				success = DBConnector.addNewClass(clazz);
+				break;
+			case "competence":
+				DBcompetence competence = new DBcompetence(doc);
+				competence.creator = this.userId;
+				success = DBConnector.addNewCompetence(competence);
+				break;
+			case "competencestructure":
+				DBcompetencestructure competencestructure = new DBcompetencestructure(doc);
+				competencestructure.creator = this.userId;
+				success = DBConnector.addNewCompetenceStructure(competencestructure);
+				break;
+			case "linkagetaskcompetence":
+				DBlinkagetaskcompetence linkagetaskcompetence = new DBlinkagetaskcompetence(doc);
+				if(((DBtask) DBConnector.getTaskById(linkagetaskcompetence.taskid)).creator != this.userId){
+					System.out.println("This user cannot add a competence to this Task - it is not his task");
+					return postFail(type);
+				}
+				DBcompetence dbc = (DBcompetence) DBConnector.getCompetenceById(linkagetaskcompetence.competenceid);
+				if(dbc.creator != this.userId && dbc.visibility != Visibility.ALL){
+					System.out.println("This user cannot add a competence to this Task - this task is private");
+					return postFail(type);
+				}
+				success = DBConnector.addNewTaskCompetenceLink(linkagetaskcompetence);
+				System.out.println("WWW");
+				break;
+			default:
+				return postFail();
+		}
+		
+		
+		if(success)
+			return postSuccess(type);
+		else
+			return postFail(type);
+	}
+	
+	public String postSuccess(){
+		String xml ="<post>";
+		xml+="<status>success</status>";
+		xml+="</post>";
+		return(xml); 
+	}	
+	
+	public String postFail(){
+		String xml ="<post>";
+		xml+="<status>failure</status>";
+		xml+="</post>";
+		return(xml);
+	}
+	
+	public String postFail(String type){
+		String xml ="<post>";
+		xml+="<status>failure</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</post>";
+		return(xml);
+	}
+	
+	public String postSuccess(String type){
+		String xml ="<post>";
+		xml+="<status>success</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</post>";
+		return(xml);
+	}
+	
+	public String getLoginXML(){
+		switch(usergroup){
+		case UNKNOWN:
+			return getLoginXMLUnknown();
+		case STUDENT:
+			return getLoginXMLStudent();
+		case TEACHER:
+			return getLoginXMLTeacher();
+		case ADMINISTRATOR:
+			return getLoginXMLAdministrator();
+		default:
+			System.out.println("This line should never be reached!");
+			return null;
+		}
+	}
+	
+	private String getLoginXMLUnknown(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>0</usergroup>";
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLStudent(){
+		String xml = "<loginxml>";
+		
+		xml+= "<usergroup>1</usergroup>";
+		
+		xml += "<registeredclasses>";
+		List<DBentity> entities = DBConnector.getRegisteredClasses(this.userId);
+		for(DBentity entity : entities){
+			DBclass clazz = (DBclass) entity;
+			xml += clazz.toXML();
+		}
+		xml += "</registeredclasses>";
+		
+		xml += "<availableclasses>";
+		entities = DBConnector.getAvailableClasses(this.creatorId);
+		for(DBentity entity : entities){
+			DBclass clazz = (DBclass) entity;
+			xml += clazz.toXML();
+		}
+		xml += "</availableclasses>";
+		
+		
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLTeacher(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>2</usergroup>";
+		
+		xml+="<createdclasses>";
+		List<DBentity> clazzes = DBConnector.getClassesByTeacherId(this.userId);
+		for(DBentity clazz : clazzes){
+			xml+=((DBclass) clazz).toXMLWithCstructure();
+		}
+		xml+="</createdclasses>";
+		
+		xml+="<createdstudents>";
+		List<DBentity> students = DBConnector.getCreatedStudentsByCreatorId(this.userId);
+		for(DBentity student : students){
+			xml+=((DBuser) student).toXML();
+		}
+		xml+="</createdstudents>";
+		
+		xml += "<createdcompetences>";
+		List<DBentity> competences =  DBConnector.getCompetencesByTeacherId(this.userId);
+		for(DBentity competence : competences){
+			xml+=((DBcompetence) competence).toXML();
+		}
+		xml += "</createdcompetences>";
+		
+		xml+="<createdcstructures>";
+		List<DBentity> cstructures =  DBConnector.getCstructureByTeacherId(this.userId);
+		for(DBentity cstructure : cstructures){
+			xml+=((DBcompetencestructure) cstructure).toXML();
+		}
+		xml+="</createdcstructures>";
+		
+		xml+="<createdtasks>";
+		List<DBentity> tasks =  DBConnector.getTasksByTeacherId(this.userId);
+		for(DBentity task : tasks){
+			xml+=((DBtask) task).toXMLwithLinkage();
+		}
+		xml+="</createdtasks>";
+		
+		xml += "<visiblecompetences>";
+		competences =  DBConnector.getVisibleCompetencesByTeacherId(this.userId);
+		for(DBentity competence : competences){
+			xml+=((DBcompetence) competence).toXML();
+		}
+		xml += "</visiblecompetences>";
+		
+		xml+="<visiblecstructures>";
+		cstructures =  DBConnector.getVisibleCstructureByTeacherId(this.userId);
+		for(DBentity cstructure : cstructures){
+			xml+=((DBcompetencestructure) cstructure).toXML();
+		}
+		xml+="</visiblecstructures>";
+		
+		xml+="<visibletasks>";
+		tasks =  DBConnector.getVisibleTasksByTeacherId(this.userId);
+		for(DBentity task : tasks){
+			xml+=((DBtask) task).toXML();
+		}
+		xml+="</visibletasks>";
+		
+		return xml+"</loginxml>";
+	}
+	
+	private String getLoginXMLAdministrator(){
+		String xml = "<loginxml>";
+		xml+= "<usergroup>3</usergroup>";
+		
+		xml += "<administrators>";
+		List<DBentity> entities = DBConnector.getAllAdministartors();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += user.toXML();
+		}
+		xml += "</administrators>";
+		
+		xml += "<teachers>";
+		entities = DBConnector.getAllTeacher();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += "<user>";
+			xml+="<usergroup>2</usergroup>";
+			xml+="<name>"+user.name+"</name>";
+			xml+="<createdclasses>";
+			List<DBentity> clazzes = DBConnector.getClassesByTeacherId(user.userid);
+			for(DBentity clazz : clazzes){
+				xml+=((DBclass) clazz).toXML();
+			}
+			xml+="</createdclasses>";
+			xml += "</user>";
+		}
+		xml += "</teachers>";
+		
+		xml += "<students>";
+		entities = DBConnector.getAllStudents();
+		for(DBentity entity : entities){
+			DBuser user = (DBuser) entity;
+			xml += "<user>";
+			xml+="<usergroup>1</usergroup>";
+			xml+="<name>"+user.name+"</name>";
+			xml+="<registeredclasses>";
+			List<DBentity> clazzes = DBConnector.getRegisteredClasses(user.userid);
+			for(DBentity clazz : clazzes){
+				xml+=((DBclass) clazz).toXML();
+			}
+			xml+="</registeredclasses>";
+			xml += "</user>";
+		}
+		xml += "</students>";
+		
+		return xml+"</loginxml>";
+	}
+
+	public static String prettyFormat(String xml){
+		String newline = System.getProperty("line.separator");
+		return prettyFormat("",xml.replace(newline, ""),0,true);
+	}
+	
+	private static String prettyFormat(String nicexml,String oldxml,int indent, boolean printindent){
+		if(XMLCreator.isTagNext(oldxml)){
+			String nextTag = getNextTag(oldxml);
+			if(nextTag == null)
+				return nicexml;
+			boolean startTag = (nextTag.substring(0, 1).equals("/")) ? false : true;
+			
+			if(!startTag)
+				indent--;
+			
+			if(printindent)
+				for(int i=1;i<=(indent*XMLCreator.indentsize);i++)
+					nicexml+=" ";
+			
+			nicexml += "<"+nextTag+">"+System.getProperty("line.separator");
+			oldxml = oldxml.substring(oldxml.indexOf(">")+1);
+			
+			if(startTag)
+				indent++;
+			
+			printindent = true;
+		}else{
+			if(oldxml.replace(" ","").equals(""))
+				return nicexml;
+			nicexml = nicexml.substring(0,nicexml.length()-1);
+			String word = oldxml.substring(0, oldxml.indexOf("<"));
+			nicexml += word;
+			oldxml = oldxml.substring(word.length());
+			printindent = false;
+		}
+
+		return prettyFormat(nicexml,oldxml,indent,printindent);
+	}
+	
+	private static boolean isTagNext(String xml){
+		xml = xml.replace(" ","");
+		if(xml.length() == 0  || xml.substring(0,1).equals("<"))
+			return true;
+		return false;
+	}
+	
+	private static String getNextTag(String xml){
+		int posStart = xml.indexOf("<");
+		int posEnd = xml.indexOf(">");
+		if(posStart != -1 && posEnd != -1){
+			String rxml = xml.substring(posStart+1, posEnd); 
+			return rxml.replace(" ", "");
+		}
+		return null;
+	}
+	
+    private static String convertDocumentToString(Document doc) {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer;
+        try {
+            transformer = tf.newTransformer();
+            // below code to remove XML declaration
+            // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            String output = writer.getBuffer().toString();
+            return output;
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+
+    private static Document convertStringToDocument(String xmlStr) {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+        DocumentBuilder builder;  
+        try  
+        {  
+            builder = factory.newDocumentBuilder();  
+            Document doc = builder.parse( new InputSource( new StringReader( xmlStr ) ) ); 
+            return doc;
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } 
+        return null;
+    }
+	
+}
