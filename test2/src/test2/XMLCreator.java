@@ -58,6 +58,91 @@ public class XMLCreator {
 		}
 	}
 	
+	//***************************************************************
+	//                 UPDATE
+	//***************************************************************
+	
+	public String updateEntity(String xml){
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return updateFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String type = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			type = doc.getElementsByTagName("type").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			e.printStackTrace();
+			return updateFail();
+		}
+		
+		boolean success = false;
+		switch(type){
+			case "linkageclasscstructure":
+				DBlinkageclasscstructure linkagecc = new DBlinkageclasscstructure(doc);
+				DBclass dbclass = (DBclass) DBConnector.getClassById(linkagecc.classid);
+				if(dbclass.creator != this.userId && dbclass.visibility != Visibility.ALL){
+					System.out.println("This user cannot update competencestructure to this class - this class is private");
+					return updateFail(type);
+				}
+				DBcompetencestructure  dbcs = (DBcompetencestructure) DBConnector.getCStructureById(linkagecc.cstructureid);
+				if(dbcs.creator != this.userId && dbcs.visibility != Visibility.ALL){
+					System.out.println("This user cannot update competencestructure to this class - this competencestructure is private");
+					return updateFail(type);
+				}
+				success = DBConnector.updateLinkageClassCstructure(linkagecc);
+				break;
+			default:
+				return updateFail();
+		}
+		
+		if(success)
+			return updateSuccess(type);
+		else
+			return updateFail(type);
+	}
+	
+	public String updateFail(){
+		String xml ="<update>";
+		xml+="<status>failure</status>";
+		xml+="</update>";
+		return(xml);
+	}
+	
+	public String updateSuccess(String type){
+		String xml ="<update>";
+		xml+="<status>success</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</update>";
+		return(xml);
+	}
+	
+	public String updateSuccess(){
+		String xml ="<update>";
+		xml+="<status>success</status>";
+		xml+="</update>";
+		return(xml);
+	}
+	
+	public String updateFail(String type){
+		String xml ="<update>";
+		xml+="<status>failure</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</update>";
+		return(xml);
+	}
+	
+	
+	//***************************************************************
+	//                 DELETE
+	//***************************************************************
+	
 	public String deleteEntity(String xml){
 		
 		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
@@ -182,6 +267,10 @@ public class XMLCreator {
 		xml+="</delete>";
 		return(xml);
 	}
+	
+	//***************************************************************
+	//                 POST
+	//***************************************************************
 	
 	public String postEntity(String xml) {
 		//System.out.print(xml);
@@ -321,6 +410,10 @@ public class XMLCreator {
 		xml+="</post>";
 		return(xml);
 	}
+	
+	//***************************************************************
+	//                 LOGIN
+	//***************************************************************
 	
 	public String getLoginXML(){
 		switch(usergroup){
@@ -481,6 +574,10 @@ public class XMLCreator {
 		return xml+"</loginxml>";
 	}
 
+	//***************************************************************
+	//                 ELSE
+	//***************************************************************
+	
 	public static String prettyFormat(String xml){
 		String newline = System.getProperty("line.separator");
 		return prettyFormat("",xml.replace(newline, ""),0,true);

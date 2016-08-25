@@ -1060,17 +1060,26 @@ public class DBConnector {
 	//                    Change data
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
-	public static void update(String table, String set, String where){
+	public static boolean update(String table, String set, String where){
 		if(!Arrays.asList(DBConnector.tableIdentifier).contains(table))
 			print("table identifier unknown!");
+		
+		List<DBentity> entities = select(table, where);
+		if(entities.isEmpty())
+			return false;
 		
 		String cmd = "UPDATE "+table+" SET "+ set + " WHERE " + where +";";
 		execute(cmd);
 		
+		return true;
 	}
-	public static void updateCompetenceValue(DBcompetencevalue cvalue){
-		update("competencevalues","value="+cvalue.value,"studentid="+cvalue.studentid+
+	public static boolean updateCompetenceValue(DBcompetencevalue cvalue){
+		return update("competencevalues","value="+cvalue.value,"studentid="+cvalue.studentid+
 				" AND classid="+cvalue.classid+" AND competenceid="+cvalue.competenceid);
+	}
+	public static boolean updateLinkageClassCstructure(DBlinkageclasscstructure entity){
+		return update("linkageclasscstructure","cstructureid="+entity.cstructureid,
+				"classid="+entity.classid);
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++

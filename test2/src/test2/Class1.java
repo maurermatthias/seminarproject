@@ -75,6 +75,16 @@ public class Class1 {
 		return returnString(XMLCreator.prettyFormat(xmlc.deleteEntity(body)));
 	}
 	
+	//update entities
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("updateEntity")
+	public Response updateEntity(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.updateEntity(body)));
+	}
+	
   /*
   
   @GET
