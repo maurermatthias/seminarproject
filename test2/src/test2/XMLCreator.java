@@ -24,6 +24,8 @@ import org.xml.sax.SAXException;
 
 import dbentities.DBclass;
 import dbentities.DBentity;
+import dbentities.DBlinkageclasscstructure;
+import dbentities.DBlinkageclasstask;
 import dbentities.DBlinkagetaskcompetence;
 import dbentities.DBuser;
 import dbentities.Usergroup;
@@ -116,6 +118,30 @@ public class XMLCreator {
 				}
 				success = DBConnector.deleteLinkageTaskCompetence(linkagetaskcompetence.taskid,linkagetaskcompetence.competenceid);
 				break;
+			case "linkageclasscstructure":
+				DBlinkageclasscstructure linkagecc = new DBlinkageclasscstructure(doc);
+				DBclass dbclass = (DBclass) DBConnector.getClassById(linkagecc.classid);
+				if(dbclass.creator != this.userId && dbclass.visibility != Visibility.ALL){
+					System.out.println("This user cannot delete competencestructure to this class - this class is private");
+					return postFail(type);
+				}
+				//delete linkage from class
+				success = DBConnector.deleteLinkageClassCstructure(linkagecc.classid);
+				break;
+			case "linkageclasstask":				
+				DBlinkageclasstask linkct = new DBlinkageclasstask(doc);
+				DBclass dbclass2 = (DBclass) DBConnector.getClassById(linkct.classid);
+				if(dbclass2.creator != this.userId && dbclass2.visibility != Visibility.ALL){
+					System.out.println("This user cannot delete link  task to  class - this class is private");
+					return postFail(type);
+				}
+				DBtask  task2 = (DBtask) DBConnector.getTaskById(linkct.taskid);
+				if(task2.creator != this.userId && task2.visibility != Visibility.ALL){
+					System.out.println("This user cannot delete link task to class - this task is private");
+					return postFail(type);
+				}
+				success = DBConnector.deleteLinkageClassTask(linkct.classid,linkct.taskid);
+				break;
 			default:
 				return deleteFail();
 		}
@@ -129,7 +155,7 @@ public class XMLCreator {
 	
 	public String deleteFail(){
 		String xml ="<delete>";
-		xml+="<status>fail</status>";
+		xml+="<status>failure</status>";
 		xml+="</delete>";
 		return(xml);
 	}
@@ -151,7 +177,7 @@ public class XMLCreator {
 	
 	public String deleteFail(String type){
 		String xml ="<delete>";
-		xml+="<status>fail</status>";
+		xml+="<status>failure</status>";
 		xml+="<type>"+type+"</type>";
 		xml+="</delete>";
 		return(xml);
@@ -161,7 +187,7 @@ public class XMLCreator {
 		//System.out.print(xml);
 		
 		if(usergroup == Usergroup.UNKNOWN)
-			return returnFail();
+			return postFail();
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -177,12 +203,12 @@ public class XMLCreator {
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return returnFail();
+			return postFail();
 		}
 		
 		//allow only special type to be submitted by student
 		if(usergroup == Usergroup.STUDENT)
-			return returnFail();
+			return postFail();
 				
 		boolean success = false;
 		switch(type){
@@ -191,7 +217,7 @@ public class XMLCreator {
 				user.creator = this.userId;
 				//only administrators are allowed to register new teachers/administrators
 				if(usergroup != Usergroup.ADMINISTRATOR && (user.usergroup == 3 || user.usergroup == 2))
-					return returnFail();
+					return postFail(type);
 				success = DBConnector.addNewUser(user);
 				break;
 			case "task":
@@ -218,33 +244,82 @@ public class XMLCreator {
 				DBlinkagetaskcompetence linkagetaskcompetence = new DBlinkagetaskcompetence(doc);
 				if(((DBtask) DBConnector.getTaskById(linkagetaskcompetence.taskid)).creator != this.userId){
 					System.out.println("This user cannot add a competence to this Task - it is not his task");
-					return returnFail();
+					return postFail(type);
 				}
 				DBcompetence dbc = (DBcompetence) DBConnector.getCompetenceById(linkagetaskcompetence.competenceid);
 				if(dbc.creator != this.userId && dbc.visibility != Visibility.ALL){
 					System.out.println("This user cannot add a competence to this Task - this task is private");
-					return returnFail();
+					return postFail(type);
 				}
 				success = DBConnector.addNewTaskCompetenceLink(linkagetaskcompetence);
-				System.out.println("WWW");
+				break;
+			case "linkageclasscstructure":
+				DBlinkageclasscstructure linkagecc = new DBlinkageclasscstructure(doc);
+				DBclass dbclass = (DBclass) DBConnector.getClassById(linkagecc.classid);
+				if(dbclass.creator != this.userId && dbclass.visibility != Visibility.ALL){
+					System.out.println("This user cannot add a competencestructure to this class - this class is private");
+					return postFail(type);
+				}
+				DBcompetencestructure  dbcs = (DBcompetencestructure) DBConnector.getCStructureById(linkagecc.cstructureid);
+				if(dbcs.creator != this.userId && dbcs.visibility != Visibility.ALL){
+					System.out.println("This user cannot add a competencestructure to this class - this competencestructure is private");
+					return postFail(type);
+				}
+				success = DBConnector.addNewClassCstructureLink(linkagecc);
+				break;
+			case "linkageclasstask":
+				DBlinkageclasstask linkct = new DBlinkageclasstask(doc);
+				DBclass dbclass2 = (DBclass) DBConnector.getClassById(linkct.classid);
+				if(dbclass2.creator != this.userId && dbclass2.visibility != Visibility.ALL){
+					System.out.println("This user cannot link this task to this class - this class is private");
+					return postFail(type);
+				}
+				DBtask  task2 = (DBtask) DBConnector.getTaskById(linkct.taskid);
+				if(task2.creator != this.userId && task2.visibility != Visibility.ALL){
+					System.out.println("This user cannot link this task to this class - this task is private");
+					return postFail(type);
+				}
+				success = DBConnector.addNewClassTaskLink(linkct);
 				break;
 			default:
-				return returnFail();
+				return postFail();
 		}
 		
 		
 		if(success)
-			return returnSuccess();
+			return postSuccess(type);
 		else
-			return returnFail();
+			return postFail(type);
 	}
 	
-	public String returnSuccess(){
-		return "<post>success</post>";
+	public String postSuccess(){
+		String xml ="<post>";
+		xml+="<status>success</status>";
+		xml+="</post>";
+		return(xml); 
+	}	
+	
+	public String postFail(){
+		String xml ="<post>";
+		xml+="<status>failure</status>";
+		xml+="</post>";
+		return(xml);
 	}
 	
-	public String returnFail(){
-		return "<post>fail</post>";
+	public String postFail(String type){
+		String xml ="<post>";
+		xml+="<status>failure</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</post>";
+		return(xml);
+	}
+	
+	public String postSuccess(String type){
+		String xml ="<post>";
+		xml+="<status>success</status>";
+		xml+="<type>"+type+"</type>";
+		xml+="</post>";
+		return(xml);
 	}
 	
 	public String getLoginXML(){

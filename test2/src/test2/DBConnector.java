@@ -686,6 +686,10 @@ public class DBConnector {
 		List<DBentity> entities = select("tasks","creator="+teacherId);
 		return entities;
 	}
+	public static List<DBentity> getClassTaskLinkageByClassId(int classId){
+		List<DBentity> entities = select("linkageclasstask","classid="+classId);
+		return entities;
+	}
 	public static DBtask getTaskById(int taskId){
 		List<DBentity> entities = select("tasks","taskid="+taskId);
 		if(entities.isEmpty())
@@ -729,6 +733,20 @@ public class DBConnector {
 			return 0;
 		else 
 			return ((DBlinkagetaskcompetence)entities.get(0)).id;
+	}
+	public static int getLinkageClassTaskIdByClassIdTaskId(int classid,int taskid){
+		List<DBentity> entities = select("linkageclasstask","taskid="+taskid+" AND classid="+classid);
+		if(entities.isEmpty())
+			return 0;
+		else 
+			return ((DBlinkageclasstask)entities.get(0)).id;
+	}
+	public static int getLinkageClassCstructureIdByClassId(int classid){
+		List<DBentity> entities = select("linkageclasscstructure","classid="+classid);
+		if(entities.isEmpty())
+			return 0;
+		else 
+			return ((DBlinkageclasscstructure)entities.get(0)).id;
 	}
 	public static int getCompetenceIdByName(String name){
 		List<DBentity> entities = select("competences","name='"+name+"'");
@@ -1097,6 +1115,16 @@ public class DBConnector {
 		if(DBConnector.getLinkageTaskCompetenceIdByTaskIdCompetenceId(taskid,competenceid)==0)
 			return false;
 		return delete("linkagetaskcompetence","taskid="+taskid+" AND competenceid="+competenceid);
+	}
+	public static boolean deleteLinkageClassCstructure(int classid){
+		if(DBConnector.getLinkageClassCstructureIdByClassId(classid)==0)
+			return false;
+		return delete("linkageclasscstructure","classid="+classid);
+	}
+	public static boolean deleteLinkageClassTask(int classid,int taskid){
+		if(DBConnector.getLinkageClassTaskIdByClassIdTaskId(classid,taskid)==0)
+			return false;
+		return delete("linkageclasstask","classid="+classid+" AND taskid="+taskid);
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++

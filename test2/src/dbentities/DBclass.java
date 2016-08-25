@@ -1,5 +1,7 @@
 package dbentities;
 
+import java.util.List;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 import org.w3c.dom.Document;
@@ -46,6 +48,15 @@ public class DBclass extends DBentity{
 		DBcompetencestructure cstruct =  DBConnector.getCStructureById(DBConnector.getCstructureIdByClassId(this.classid));
 		if(cstruct != null)
 			xml +="<competencestructure>"+cstruct.name+"</competencestructure>";
+		this.classid=DBConnector.getClassIdByName(this.name);
+		List<DBentity> entities = DBConnector.getClassTaskLinkageByClassId(this.classid);
+		if(!entities.isEmpty()){
+			xml+="<tasks>";
+			for(int i=0;i<entities.size();i++){
+				xml+="<task>"+DBConnector.getTaskById(((DBlinkageclasstask)entities.get(i)).taskid).name+"</task>";
+			}
+			xml+="</tasks>";
+		}
 		xml+="</class>";
 		
 		return xml;

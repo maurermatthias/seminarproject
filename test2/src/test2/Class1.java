@@ -71,7 +71,6 @@ public class Class1 {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("deleteEntity")
 	public Response deleteEntity(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
-		System.out.println(body);
 		XMLCreator xmlc = new XMLCreator(userName,pwd);
 		return returnString(XMLCreator.prettyFormat(xmlc.deleteEntity(body)));
 	}
