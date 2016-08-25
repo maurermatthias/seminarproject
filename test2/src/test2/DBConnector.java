@@ -720,6 +720,10 @@ public class DBConnector {
 		List<DBentity> entities = select("users","creator="+creatorId);
 		return entities;
 	}
+	public static List<DBentity> getCompetenceWeightByCStructureId(int cstructureid){
+		List<DBentity> entities = select("competenceweights","cstructureid="+cstructureid);
+		return entities;
+	}
 	public static int getCstructureIdByName(String name){
 		List<DBentity> entities = select("competencestructures","name='"+name+"'");
 		if(entities.isEmpty())
@@ -740,6 +744,21 @@ public class DBConnector {
 			return 0;
 		else 
 			return ((DBlinkageclasstask)entities.get(0)).id;
+	}
+	public static int getRegisteredStudentIdByClassIdStudentId(int classid,int studentid){
+		List<DBentity> entities = select("registeredstudents","studentid="+studentid+" AND classid="+classid);
+		if(entities.isEmpty())
+			return 0;
+		else 
+			return ((DBregisteredstudent)entities.get(0)).id;
+	}
+	public static int getCompetenceWeightByFromToCstructureIds(int fromid, int toid, int cstructureid){
+		List<DBentity> entities = select("competenceweights","fromcompetenceid="+fromid+
+				" AND tocompetenceid="+toid+" AND cstructureid="+cstructureid);
+		if(entities.isEmpty())
+			return 0;
+		else 
+			return ((DBcompetenceweight)entities.get(0)).id;
 	}
 	public static int getLinkageClassCstructureIdByClassId(int classid){
 		List<DBentity> entities = select("linkageclasscstructure","classid="+classid);
@@ -1135,7 +1154,17 @@ public class DBConnector {
 			return false;
 		return delete("linkageclasstask","classid="+classid+" AND taskid="+taskid);
 	}
-	
+	public static boolean deleteRegisteredStudentByClassIdStudentId(int classid,int studentid){
+		if(DBConnector.getRegisteredStudentIdByClassIdStudentId(classid,studentid)==0)
+			return false;
+		return delete("registeredstudents","studentid="+studentid+" AND classid="+classid);
+	}
+	public static boolean deleteCompetenceWeightByFromToCstructureIds(int fromid, int toid, int cstructureid){
+		if(DBConnector.getCompetenceWeightByFromToCstructureIds(fromid,toid,cstructureid)==0)
+			return false;
+		return delete("competenceweights","fromcompetenceid="+fromid+
+				" AND tocompetenceid="+toid+" AND cstructureid="+cstructureid);
+	}
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                   Test Data
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++

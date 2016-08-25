@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.lang.model.element.Element;
@@ -27,11 +28,13 @@ import dbentities.DBentity;
 import dbentities.DBlinkageclasscstructure;
 import dbentities.DBlinkageclasstask;
 import dbentities.DBlinkagetaskcompetence;
+import dbentities.DBregisteredstudent;
 import dbentities.DBuser;
 import dbentities.Usergroup;
 import dbentities.Visibility;
 import dbentities.DBcompetence;
 import dbentities.DBcompetencestructure;
+import dbentities.DBcompetenceweight;
 import dbentities.DBtask;
 
 public class XMLCreator {
@@ -145,9 +148,9 @@ public class XMLCreator {
 	
 	public String deleteEntity(String xml){
 		
-		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+		if(usergroup == Usergroup.UNKNOWN)
 			return deleteFail();
-		
+
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
 		Document doc = null;
@@ -164,6 +167,10 @@ public class XMLCreator {
 			return deleteFail();
 		}
 		
+		//allow only special type to be deleted by student
+		if(usergroup == Usergroup.STUDENT && !type.equals("studentregistration"))
+			return deleteFail();
+
 		boolean success = false;
 		switch(type){
 			case "user":
@@ -227,10 +234,25 @@ public class XMLCreator {
 				}
 				success = DBConnector.deleteLinkageClassTask(linkct.classid,linkct.taskid);
 				break;
+			case "studentregistration":
+				DBregisteredstudent regstud = new DBregisteredstudent(doc);
+				DBclass dbclass3 = (DBclass) DBConnector.getClassById(regstud.classid);
+				if(this.userId != regstud.studentid && dbclass3.creator != this.userId && this.usergroup != Usergroup.ADMINISTRATOR)
+					return deleteFail();
+				success = DBConnector.deleteRegisteredStudentByClassIdStudentId(regstud.classid,regstud.studentid);
+				break;
+			case "competenceweight":
+				DBcompetenceweight cweight = new DBcompetenceweight(doc);
+				DBcompetencestructure struct =  DBConnector.getCStructureById(cweight.cstructureid);
+				if(struct.creator != this.userId)
+					return deleteFail();
+				success = DBConnector.deleteCompetenceWeightByFromToCstructureIds(cweight.fromcompetenceid,
+						cweight.tocompetenceid,cweight.cstructureid);
+				break;
 			default:
 				return deleteFail();
 		}
-		
+
 		
 		if(success)
 			return deleteSuccess(type);
@@ -296,7 +318,7 @@ public class XMLCreator {
 		}
 		
 		//allow only special type to be submitted by student
-		if(usergroup == Usergroup.STUDENT)
+		if(usergroup == Usergroup.STUDENT && !type.equals("studentregistration"))
 			return postFail();
 				
 		boolean success = false;
@@ -369,6 +391,22 @@ public class XMLCreator {
 					return postFail(type);
 				}
 				success = DBConnector.addNewClassTaskLink(linkct);
+				break;
+			case "studentregistration":
+				DBregisteredstudent regstud = new DBregisteredstudent(doc);
+				DBclass dbclass3 = (DBclass) DBConnector.getClassById(regstud.classid);
+				int studentcreator = DBConnector.getUserById(regstud.studentid).creator;
+				if((this.userId != regstud.studentid && this.usergroup != Usergroup.ADMINISTRATOR) || 
+						(dbclass3.visibility != Visibility.ALL && studentcreator != dbclass3.creator))
+					return postFail();
+				success = DBConnector.registerStudentToClass(regstud);
+				break;
+			case "competenceweight":
+				DBcompetenceweight cweight = new DBcompetenceweight(doc);
+				DBcompetencestructure struct =  DBConnector.getCStructureById(cweight.cstructureid);
+				if(struct.creator != this.userId)
+					return deleteFail();
+				success = DBConnector.addNewCompetenceWeight(cweight);
 				break;
 			default:
 				return postFail();
@@ -444,8 +482,10 @@ public class XMLCreator {
 		
 		xml += "<registeredclasses>";
 		List<DBentity> entities = DBConnector.getRegisteredClasses(this.userId);
+		List<String> classes = new ArrayList<String>();
 		for(DBentity entity : entities){
 			DBclass clazz = (DBclass) entity;
+			classes.add(clazz.name);
 			xml += clazz.toXML();
 		}
 		xml += "</registeredclasses>";
@@ -454,7 +494,8 @@ public class XMLCreator {
 		entities = DBConnector.getAvailableClasses(this.creatorId);
 		for(DBentity entity : entities){
 			DBclass clazz = (DBclass) entity;
-			xml += clazz.toXML();
+			if(!classes.contains(clazz.name))
+				xml += clazz.toXML();
 		}
 		xml += "</availableclasses>";
 		
@@ -490,7 +531,7 @@ public class XMLCreator {
 		xml+="<createdcstructures>";
 		List<DBentity> cstructures =  DBConnector.getCstructureByTeacherId(this.userId);
 		for(DBentity cstructure : cstructures){
-			xml+=((DBcompetencestructure) cstructure).toXML();
+			xml+=((DBcompetencestructure) cstructure).toXMLWithStructure();
 		}
 		xml+="</createdcstructures>";
 		

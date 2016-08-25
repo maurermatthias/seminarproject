@@ -1,8 +1,12 @@
 package dbentities;
 
+import java.util.List;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 import org.w3c.dom.Document;
+
+import test2.DBConnector;
 
 @Root(name="competencestructure")
 public class DBcompetencestructure extends DBentity{
@@ -33,4 +37,26 @@ public class DBcompetencestructure extends DBentity{
 		if(doc.getElementsByTagName("visibility").getLength()>0)
 			this.visibility =  (doc.getElementsByTagName("visibility").item(0).getFirstChild().getNodeValue().equals("ALL")) ? Visibility.ALL : Visibility.NOTALL;
 	}
+	
+	public String toXMLWithStructure(){
+		String xml ="<competencestructure>";
+		xml+="<name>"+this.name+"</name>";
+		xml+="<description>"+this.description+"</description>";
+		List<DBentity> entities = DBConnector.getCompetenceWeightByCStructureId(DBConnector.getCstructureIdByName(this.name));
+		if(!entities.isEmpty()){
+			xml+="<competenceweights>";
+			for(int i=0;i<entities.size();i++){
+				DBcompetenceweight weight = (DBcompetenceweight) entities.get(i);
+				xml+="<competenceweight>";
+				xml+="<from>"+DBConnector.getCompetenceNameById(weight.fromcompetenceid)+"</from>";
+				xml+="<to>"+DBConnector.getCompetenceNameById(weight.tocompetenceid)+"</to>";
+				xml+="<weight>"+weight.weight+"</weight>";
+				xml+="</competenceweight>";
+			}
+			xml+="</competenceweights>";
+		}
+		xml+="</competencestructure>";
+		
+		return xml;
+	};
 }
