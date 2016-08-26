@@ -21,4 +21,5 @@ public class Clazz {
 		str += this.taskCollection.getDiagnosticString();
 		return str+"***********************************************";
 	}
+	
 }

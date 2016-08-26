@@ -85,6 +85,26 @@ public class Class1 {
 		return returnString(XMLCreator.prettyFormat(xmlc.updateEntity(body)));
 	}
 	
+	//method returning xml with all data needed after the login
+	@GET
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("getNextTask")
+	public Response getNextTask(@QueryParam("name") String userName, @QueryParam("password") String pwd,
+			@QueryParam("classname") String classname){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.getNextTaskXML(classname)));
+	}
+	
+	//updateCompetencestate
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("updateCompetencestate")
+	public Response updateCompetencestate(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.updateCompetencestate(body)));
+	}
   /*
   
   @GET

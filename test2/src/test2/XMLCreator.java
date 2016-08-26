@@ -32,6 +32,9 @@ import dbentities.DBregisteredstudent;
 import dbentities.DBuser;
 import dbentities.Usergroup;
 import dbentities.Visibility;
+import knowledgestructureelements.Clazz;
+import knowledgestructureelements.StudentInClass;
+import knowledgestructureelements.Task;
 import dbentities.DBcompetence;
 import dbentities.DBcompetencestructure;
 import dbentities.DBcompetenceweight;
@@ -289,6 +292,52 @@ public class XMLCreator {
 		xml+="</delete>";
 		return(xml);
 	}
+	
+	
+	//***************************************************************
+	//                 NEXT TASK/UPDATE
+	//***************************************************************
+	
+	public String updateCompetencestate(String xml){
+		return updateCompetencestateSuccess();
+	}
+	
+	public String getNextTaskXML(String classname){
+		int classid = DBConnector.getClassIdByName(classname);
+		int registrationid = DBConnector.getRegisteredStudentIdByClassIdStudentId(classid, this.userId);
+		if(registrationid == 0)
+			return getNextTaskFail();
+		
+		StudentInClass studentInClass = new StudentInClass(classid,this.userId);
+		Task task = studentInClass.getNextTask();
+		
+		if(task == null)
+			return getNextTaskFail();
+		
+		return task.toXML();
+	}
+	
+	public String getNextTaskFail(){
+		String xml = "<getnexttask>";
+		xml+="<status>failure</status>";
+		xml += "</getnexttask>";
+		return xml;
+	}
+	
+	public String updateCompetencestateFail(){
+		String xml ="<updatecompetencestate>";
+		xml+="<status>failure</status>";
+		xml+="</updatecompetencestate>";
+		return(xml);
+	}
+	
+	public String updateCompetencestateSuccess(){
+		String xml ="<updatecompetencestate>";
+		xml+="<status>success</status>";
+		xml+="</updatecompetencestate>";
+		return(xml);
+	}
+	
 	
 	//***************************************************************
 	//                 POST

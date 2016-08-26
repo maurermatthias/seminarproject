@@ -1,7 +1,6 @@
 package knowledgestructureelements;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -38,5 +37,11 @@ public class Task {
 		    str+="    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
 		}
 		return str;
+	}
+	
+	public String toXML(){
+		String xml = "<task><question>"+this.question+
+				"</question><taskid>"+this.taskid+"</taskid></task>";
+		return xml;
 	}
 }
