@@ -45,6 +45,10 @@ public class DBclass extends DBentity{
 		xml+="<name>"+this.name+"</name>";
 		xml+="<description>"+this.description+"</description>";
 		xml+="<id>"+this.classid+"</id>";
+		if(DBConnector.getActiveClassIdByName(this.name)==0)
+			xml+="<active>false</active>";
+		else
+			xml+="<active>true</active>";
 		DBcompetencestructure cstruct =  DBConnector.getCStructureById(DBConnector.getCstructureIdByClassId(this.classid));
 		if(cstruct != null)
 			xml +="<competencestructure>"+cstruct.name+"</competencestructure>";

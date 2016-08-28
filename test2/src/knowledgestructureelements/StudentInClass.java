@@ -1,11 +1,15 @@
 package knowledgestructureelements;
 
+import dbentities.DBclass;
+import test2.DBConnector;
+
 public class StudentInClass {
-	private Clazz clazz;
+	public Clazz clazz;
 	public CompetenceState competenceState;
 	
 	public StudentInClass(int classId, int userId){
-		this.clazz = new Clazz(classId);
+		String classname = ((DBclass)DBConnector.getClassById(classId)).name;
+		this.clazz = DBConnector.getActiveClazzByName(classname);
 		this.competenceState = new CompetenceState(userId, clazz);
 	}
 	
@@ -26,5 +30,9 @@ public class StudentInClass {
 	
 	public void updateCompetenceState(int taskId, Boolean success){
 		competenceState = clazz.competenceStructure.updateCompetenceState(competenceState, success);
+	}
+	
+	public boolean isDataValid(){
+		return clazz.isDataValid();
 	}
 }

@@ -3,9 +3,34 @@ package knowledgestructureelements;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 public class CompetenceStructure {
 	public List<Competence> competences = new ArrayList<Competence>();
 	private Boolean containsCircles = null;
+	
+	public CompetenceStructure(){}
+	
+	public CompetenceStructure(NodeList compstructure){
+		NodeList competencesList = compstructure;
+		//add nodes
+		for(int i=0;i<competencesList.getLength();i++){
+			Node comp = competencesList.item(i);
+			competences.add(new Competence(comp));
+		}
+		//add edges
+		for(int i=0;i<competencesList.getLength();i++){
+			String to = competencesList.item(i).getFirstChild().getFirstChild().getNodeValue();
+			NodeList prerequisites = competencesList.item(i).getFirstChild().getNextSibling().getChildNodes();
+			for(int j=0;j<prerequisites.getLength();j++){
+				String from = prerequisites.item(j).getFirstChild().getNextSibling().getFirstChild().getNodeValue();
+				String weight = prerequisites.item(j).getFirstChild().getFirstChild().getNodeValue();
+				addEdge(from,to,Double.parseDouble(weight));
+			}
+		}
+	}
 	
 	public boolean addEdge(String fromName, String toName, double weight){
 		Competence from = getCompetenceByName(fromName);
@@ -96,5 +121,35 @@ public class CompetenceStructure {
 
 	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate, Boolean success){
 		return null;
+	}
+
+	//are all competences linked (5)
+	//weights sum up to 1 (3)
+	public int isDataValid(){
+		int retVal = 1;
+		
+		for(Competence competence : competences){
+			Double weight = 0.0;
+			for(Edge edge : competence.prerequisites){
+				weight += edge.weight;
+			}
+			if(weight>1){
+				retVal = retVal *3; 
+			}
+			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
+				retVal = retVal *5;
+			}
+		}
+		
+		return retVal;
+	}
+
+	public String toXML(){
+		String xml="<competences>";
+		for(Competence competence : competences){
+			xml+=competence.toXML();
+		}
+		xml+="</competences>";
+		return xml;
 	}
 }

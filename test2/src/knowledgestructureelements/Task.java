@@ -1,8 +1,14 @@
 package knowledgestructureelements;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import dbentities.DBentity;
 import dbentities.DBlinkagetaskcompetence;
@@ -11,7 +17,7 @@ import test2.DBConnector;
 
 public class Task {
 
-	public Map<Competence,Double> weights;
+	public Map<Competence,Double> weights =  new HashMap<Competence,Double>();
 	public String question;
 	public String answer;
 	public int taskid;
@@ -22,11 +28,23 @@ public class Task {
 		question = dbtask.text;
 		answer = dbtask.answer;
 		
-		weights = new HashMap<Competence,Double>();
 		List<DBentity> entities = DBConnector.getCompetenceLinksToTaskById(taskid);
 		for(DBentity entity : entities){
 			DBlinkagetaskcompetence link = ((DBlinkagetaskcompetence) entity);
 			weights.put(competenceStructure.getCompetenceByName(DBConnector.getCompetenceNameById(link.competenceid)), link.weight);
+		}
+	}
+	
+	public Task(Node task, CompetenceStructure competenceStructure){
+		this.question = task.getFirstChild().getFirstChild().getNodeValue();
+		this.answer = task.getFirstChild().getNextSibling().getFirstChild().getNodeValue();
+		this.taskid = Integer.parseInt(task.getFirstChild().getNextSibling().getNextSibling().getFirstChild().getNodeValue());
+		NodeList weightL = task.getFirstChild().getNextSibling().getNextSibling().getNextSibling().getChildNodes();
+		for(int j=0;j<weightL.getLength();j++){
+			String compName = weightL.item(j).getFirstChild().getFirstChild().getNodeValue();
+			String weight = weightL.item(j).getFirstChild().getNextSibling().getFirstChild().getNodeValue();
+			Competence com = competenceStructure.getCompetenceByName(compName);
+			weights.put(com, Double.parseDouble(weight));
 		}
 	}
 	
@@ -42,6 +60,23 @@ public class Task {
 	public String toXML(){
 		String xml = "<task><question>"+this.question+
 				"</question><taskid>"+this.taskid+"</taskid></task>";
+		return xml;
+	}
+	
+	public String toXMLLong(){
+		String xml = "<question>"+this.question+"</question>";
+		xml += "<answer>"+this.answer+"</answer>";
+		xml += "<taskid>"+this.taskid+"</taskid>";
+		xml+="<edges>";
+		Iterator<Entry<Competence, Double>> it = weights.entrySet().iterator();
+		while(it.hasNext()){
+			Map.Entry<Competence, Double> pair = it.next();
+			xml+="<edge>";
+			xml+="<competence>"+pair.getKey().name+"</competence>";
+			xml+="<weight>"+pair.getValue()+"</weight>";
+			xml+="</edge>";
+		}
+		xml+="</edges>";
 		return xml;
 	}
 }

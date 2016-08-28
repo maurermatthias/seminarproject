@@ -3,6 +3,9 @@ package knowledgestructureelements;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
 public class Competence {
 	
 	public String name;
@@ -13,6 +16,10 @@ public class Competence {
 	
 	public Competence(String name){
 		this.name = name;
+	}
+	
+	public Competence(Node comp){
+		name = comp.getFirstChild().getFirstChild().getNodeValue();
 	}
 	
 	public Competence getPrerequisiteCompetence(String name){
@@ -62,5 +69,20 @@ public class Competence {
 		for(Edge edge : successors)
 			str+="-"+edge.to.name +"("+edge.weight+")\n";
 		return str;
+	}
+	
+	public String toXML(){
+		String xml = "<competence>";
+		xml+="<name>"+name+"</name>";
+		xml+="<prerequisites>";
+		for(Edge edge : prerequisites){
+			xml+="<prerequisite>";
+			xml+="<weight>"+edge.weight+"</weight>";
+			xml+="<prerequisitescompetence>"+edge.from.name+"</prerequisitescompetence>";
+			xml+="</prerequisite>";
+		}
+		xml += "</prerequisites>";
+		xml+="</competence>";
+		return xml;
 	}
 }

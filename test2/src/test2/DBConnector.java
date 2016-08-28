@@ -1,5 +1,6 @@
 package test2;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -8,6 +9,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import dbentities.DBactiveclass;
 import dbentities.DBclass;
 import dbentities.DBcompetence;
 import dbentities.DBcompetencestructure;
@@ -22,6 +28,7 @@ import dbentities.DBtask;
 import dbentities.DBuser;
 import dbentities.Usergroup;
 import dbentities.Visibility;
+import knowledgestructureelements.Clazz;
 import knowledgestructureelements.Competence;
 import knowledgestructureelements.CompetenceStructure;
 import knowledgestructureelements.Task;
@@ -51,7 +58,7 @@ public class DBConnector {
 	
 	//table identifier
 	private static String[] tableIdentifier = {"users","competences","tasks","competencestructures",
-			"classes","competencevalues","linkagetaskcompetence","competenceweights",
+			"classes","activeclasses","competencevalues","linkagetaskcompetence","competenceweights",
 			"linkageclasstask","linkageclasscstructure","registeredstudents"};
 	
 	//private constructor
@@ -219,6 +226,17 @@ public class DBConnector {
 	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    + "PRIMARY KEY (classid))"; 
 	            break;
+	        case "activeclasses":
+	            usertable += "CREATE TABLE IF NOT EXISTS activeclasses (" 
+	                    + "classid INT(64) NOT NULL AUTO_INCREMENT,"  
+	                    + "creator INT(64)," 
+	                    + "name TEXT,"  
+	                    + "description TEXT,"  
+	                    + "visibility Int(4),"
+	                    + "data TEXT,"
+	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
+	                    + "PRIMARY KEY (classid))"; 
+	            break;
 	        case "competencevalues":
 	            usertable += "CREATE TABLE IF NOT EXISTS competencevalues (" 
 	                    + "id INT(64) NOT NULL AUTO_INCREMENT,"  
@@ -228,7 +246,7 @@ public class DBConnector {
 	                    + "value DOUBLE,"
 	                    + "PRIMARY KEY (id),"
 	                    + "FOREIGN KEY (studentid) REFERENCES users(userid) ON DELETE CASCADE," 
-	                    + "FOREIGN KEY (classid) REFERENCES classes(classid) ON DELETE CASCADE," 
+	                    //+ "FOREIGN KEY (classid) REFERENCES activeclasses(classid) ON DELETE CASCADE," 
 	                    + "FOREIGN KEY (competenceid) REFERENCES competences(competenceid) ON DELETE CASCADE)";
 	            break;
 	        case "linkagetaskcompetence":
@@ -277,7 +295,7 @@ public class DBConnector {
 	                    + "classid INT(64) NOT NULL,"  
 	                    + "studentid INT(64) NOT NULL,"  
 	                    + "PRIMARY KEY (id),"
-	                    + "FOREIGN KEY (classid) REFERENCES classes(classid) ON DELETE CASCADE," 
+	                    + "FOREIGN KEY (classid) REFERENCES activeclasses(classid) ON DELETE CASCADE," 
 	                    + "FOREIGN KEY (studentid) REFERENCES users(userid) ON DELETE CASCADE)";
 	            break;
 	        default:
@@ -540,6 +558,18 @@ public class DBConnector {
 		        		results.add(cl);
 		        	}
 			    	break;
+			    case "activeclasses":
+		        	while(rs.next()){
+		        		DBactiveclass acl = new DBactiveclass();
+		        		acl.classid = rs.getInt("classid");
+		        		acl.creator = rs.getInt("creator");
+		        		acl.name = rs.getString("name");
+		        		acl.description = rs.getString("description");
+		        		acl.visibility = Visibility.fromInteger(rs.getInt("visibility"));
+		        		acl.data = rs.getString("data");
+		        		results.add(acl);
+		        	}
+			    	break;
 			    case "linkageclasstask":
 		        	while(rs.next()){
 		        		DBlinkageclasstask lct = new DBlinkageclasstask();
@@ -608,6 +638,10 @@ public class DBConnector {
 		List<DBentity> entities = select("classes","creator='"+creatorid+"' OR visibility=0");
 		return entities;
 	}
+	public static List<DBentity> getAvailableActiveClasses(int creatorid){
+		List<DBentity> entities = select("activeclasses","creator='"+creatorid+"' OR visibility=0");
+		return entities;
+	}
 	public static int getUserId(String name){
 		List<DBentity> entities = select("users","name='"+name+"'");
 		if(entities.isEmpty())
@@ -668,6 +702,10 @@ public class DBConnector {
 	}
 	public static List<DBentity> getClassesByTeacherId(int teacherId){
 		List<DBentity> entities = select("classes","creator="+teacherId);
+		return entities;
+	}
+	public static List<DBentity> getActiveClassesByTeacherId(int teacherId){
+		List<DBentity> entities = select("activeclasses","creator="+teacherId);
 		return entities;
 	}
 	public static List<DBentity> getCompetencesByTeacherId(int teacherId){
@@ -767,6 +805,13 @@ public class DBConnector {
 		else 
 			return ((DBlinkageclasscstructure)entities.get(0)).id;
 	}
+	public static int getActiveClassIdByName(String name){
+		List<DBentity> entities = select("activeclasses","name='"+name+"'");
+		if(entities.isEmpty())
+			return 0;
+		else 
+			return ((DBactiveclass)entities.get(0)).classid;
+	}
 	public static int getCompetenceIdByName(String name){
 		List<DBentity> entities = select("competences","name='"+name+"'");
 		if(entities.isEmpty())
@@ -853,6 +898,21 @@ public class DBConnector {
 		else 
 			return ((DBcompetencevalue)entities.get(0)).value;
 	}
+	public static Clazz getActiveClazzByName(String name){
+		List<DBentity> entities = select("activeclasses","name='"+name+"'");
+		if(entities.isEmpty())
+			return null;
+		DBactiveclass aclazz = (DBactiveclass) entities.get(0);
+		Clazz clazz;
+		try {
+			clazz = new Clazz(aclazz.data);
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		return clazz;
+	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                    Insert data
@@ -912,6 +972,12 @@ public class DBConnector {
 		    	DBclass cl = (DBclass) entity;
 		    	cmd += "(creator,name,description,visibility) VALUES ";
 		    	cmd += "("+cl.creator+",'"+cl.name+"','"+cl.description+"',"+Visibility.toInteger(cl.visibility)+");";
+		    	execute(cmd);
+		    	break;
+		    case "activeclasses":
+		    	DBactiveclass acl = (DBactiveclass) entity;
+		    	cmd += "(creator,name,description,visibility,data) VALUES ";
+		    	cmd += "("+acl.creator+",'"+acl.name+"','"+acl.description+"',"+Visibility.toInteger(acl.visibility)+",'"+acl.data+"');";
 		    	execute(cmd);
 		    	break;
 		    case "linkageclasstask":
@@ -1075,6 +1141,19 @@ public class DBConnector {
 			return false;
 		}
 	}
+	public static boolean addActiveClass(DBactiveclass clazz){
+		List<DBentity> entity = select("activeclasses","name='"+clazz.name+"'");
+		if(entity.isEmpty()){
+			insert("activeclasses",clazz);
+			print("Active class '"+clazz.name+"' added.");
+			return true;
+		}
+		else{
+			print("Can not add active class '"+clazz.name+"' - this active class already exists!");
+			return false;
+		}
+	}
+	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                    Change data
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1099,6 +1178,9 @@ public class DBConnector {
 	public static boolean updateLinkageClassCstructure(DBlinkageclasscstructure entity){
 		return update("linkageclasscstructure","cstructureid="+entity.cstructureid,
 				"classid="+entity.classid);
+	}
+	public static boolean updateActiveClass(DBactiveclass clazz){
+		return update("activeclasses","data='"+clazz.data+"'","name='"+clazz.name+"'");
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1165,6 +1247,26 @@ public class DBConnector {
 		return delete("competenceweights","fromcompetenceid="+fromid+
 				" AND tocompetenceid="+toid+" AND cstructureid="+cstructureid);
 	}
+	public static boolean deleteActiveClass(String name){
+		if(DBConnector.getActiveClassIdByName(name)==0)
+			return false;
+		return delete("activeclasses","name='"+name+"'");
+	}
+	
+	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//                   ELSE
+	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	
+	public static boolean isClassActive(int classId){
+		String cname = DBConnector.getClassById(classId).name;
+		if(DBConnector.getActiveClassIdByName(cname)==0)
+			return false;
+		
+		return true;
+	}
+	
+	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                   Test Data
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1197,34 +1299,7 @@ public class DBConnector {
 		addNewClass(class3);
 		DBclass class4 = new DBclass("class4","desc. class4",Visibility.NOTALL,getUserId("teacher2"));
 		addNewClass(class4);
-		
-		//register students
-		DBregisteredstudent regstud1 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class1"));
-		registerStudentToClass(regstud1);
-		DBregisteredstudent regstud2 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class2"));
-		registerStudentToClass(regstud2);
-		DBregisteredstudent regstud3 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class4"));
-		registerStudentToClass(regstud3);
-		DBregisteredstudent regstud4 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class2"));
-		registerStudentToClass(regstud4);
-		DBregisteredstudent regstud5 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class3"));
-		registerStudentToClass(regstud5);
-		DBregisteredstudent regstud6 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class4"));
-		registerStudentToClass(regstud6);
-		DBregisteredstudent regstud7 = new DBregisteredstudent(getUserId("student2"),getClassIdByName("class1"));
-		registerStudentToClass(regstud7);
-		DBregisteredstudent regstud8 = new DBregisteredstudent(getUserId("student2"),getClassIdByName("class2"));
-		registerStudentToClass(regstud8);
-		DBregisteredstudent regstud9 = new DBregisteredstudent(getUserId("student3"),getClassIdByName("class4"));
-		registerStudentToClass(regstud9);
-		DBregisteredstudent regstud10 = new DBregisteredstudent(getUserId("student5"),getClassIdByName("class3"));
-		registerStudentToClass(regstud10);
-		DBregisteredstudent regstud11 = new DBregisteredstudent(getUserId("student5"),getClassIdByName("class4"));
-		registerStudentToClass(regstud11);
-		DBregisteredstudent regstud12 = new DBregisteredstudent(getUserId("student6"),getClassIdByName("class2"));
-		registerStudentToClass(regstud12);
-		
-		
+
 		//create competence structure for teacher1
 		DBcompetence com1 = new DBcompetence("C1","desc. C1",getUserId("teacher1"),Visibility.ALL);
 		addNewCompetence(com1);
@@ -1290,6 +1365,41 @@ public class DBConnector {
 		addNewClassTaskLink(lct4);
 		DBlinkageclasstask lct5 = new DBlinkageclasstask(getTaskIdByName("task5"),getClassIdByName("class1"));
 		addNewClassTaskLink(lct5);
+		
+		//set class active
+		Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
+		clazz.setActive();
+		
+		
+		//register students
+		DBregisteredstudent regstud1 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class1"));
+		registerStudentToClass(regstud1);
+		/*
+		DBregisteredstudent regstud2 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class2"));
+		registerStudentToClass(regstud2);
+		DBregisteredstudent regstud3 = new DBregisteredstudent(getUserId("student1"),getClassIdByName("class4"));
+		registerStudentToClass(regstud3);
+		DBregisteredstudent regstud4 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class2"));
+		registerStudentToClass(regstud4);
+		DBregisteredstudent regstud5 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class3"));
+		registerStudentToClass(regstud5);
+		DBregisteredstudent regstud6 = new DBregisteredstudent(getUserId("student4"),getClassIdByName("class4"));
+		registerStudentToClass(regstud6);
+		*/
+		DBregisteredstudent regstud7 = new DBregisteredstudent(getUserId("student2"),getClassIdByName("class1"));
+		registerStudentToClass(regstud7);
+		/*
+		DBregisteredstudent regstud8 = new DBregisteredstudent(getUserId("student2"),getClassIdByName("class2"));
+		registerStudentToClass(regstud8);
+		DBregisteredstudent regstud9 = new DBregisteredstudent(getUserId("student3"),getClassIdByName("class4"));
+		registerStudentToClass(regstud9);
+		DBregisteredstudent regstud10 = new DBregisteredstudent(getUserId("student5"),getClassIdByName("class3"));
+		registerStudentToClass(regstud10);
+		DBregisteredstudent regstud11 = new DBregisteredstudent(getUserId("student5"),getClassIdByName("class4"));
+		registerStudentToClass(regstud11);
+		DBregisteredstudent regstud12 = new DBregisteredstudent(getUserId("student6"),getClassIdByName("class2"));
+		registerStudentToClass(regstud12);
+		*/
 	}
 	
 }

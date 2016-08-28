@@ -23,6 +23,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import dbentities.DBactiveclass;
 import dbentities.DBclass;
 import dbentities.DBentity;
 import dbentities.DBlinkageclasscstructure;
@@ -540,9 +541,9 @@ public class XMLCreator {
 		xml += "</registeredclasses>";
 		
 		xml += "<availableclasses>";
-		entities = DBConnector.getAvailableClasses(this.creatorId);
+		entities = DBConnector.getAvailableActiveClasses(this.creatorId);
 		for(DBentity entity : entities){
-			DBclass clazz = (DBclass) entity;
+			DBactiveclass clazz = (DBactiveclass) entity;
 			if(!classes.contains(clazz.name))
 				xml += clazz.toXML();
 		}
