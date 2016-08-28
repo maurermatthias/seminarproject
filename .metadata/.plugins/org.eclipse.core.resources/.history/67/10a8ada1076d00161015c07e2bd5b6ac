@@ -1,0 +1,50 @@
+package knowledgestructureelements;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
+public class TaskCollection {
+	public List<Task> tasks = new ArrayList<Task>();
+	
+	public TaskCollection(){}
+	
+	public TaskCollection(Document taskc){
+		NodeList nodes = taskc.getElementsByTagName("task");
+		for(int i=0;i<nodes.getLength();i++){
+			
+		}
+	}
+	
+	public void addTask(Task task){
+		tasks.add(task);
+	}
+	
+	public String getDiagnosticString(){
+		String str = "Print out TaskCollection:\n";
+		for(Task task : tasks)
+			str += task.getDiagnosticString();
+		return str;
+	}
+	
+	public int isDataValid(List<Competence> competences){
+		for(Task task : tasks){
+			for(Competence competence : task.weights.keySet()){
+				if(!competences.contains(competence)){
+					return 2;
+				}
+			}
+		}
+		return 1;
+	}
+
+	public String toXML(){
+		String xml="";
+		for(Task task : tasks){
+			xml+="<task>"+task.toXMLLong()+"</task>";
+		}
+		return xml;
+	}
+}

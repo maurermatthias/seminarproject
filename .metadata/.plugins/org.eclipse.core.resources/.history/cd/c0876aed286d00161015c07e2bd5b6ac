@@ -1,0 +1,65 @@
+package knowledgestructureelements;
+
+public class StudentInClass {
+	public Clazz clazz;
+	public CompetenceState competenceState;
+	private int validationCode = 0;
+	
+	public StudentInClass(int classId, int userId){
+		this.clazz = new Clazz(classId);
+		this.competenceState = new CompetenceState(userId, clazz);
+	}
+	
+	public String getDiagnosticString(){
+		String str = "Student in Class:\n";
+		str += clazz.getDiagnosticString() + "\n" + competenceState.getDiagnosticString();
+		return str;
+	}
+
+	public Task getNextTask(){
+		if(clazz.taskCollection.tasks.size()>0){
+			Task task = clazz.taskCollection.tasks.get(0);
+			return task;
+		}else{
+			return null;
+		}
+	}
+	
+	public void updateCompetenceState(int taskId, Boolean success){
+		competenceState = clazz.competenceStructure.updateCompetenceState(competenceState, success);
+	}
+	
+	//1, if data is fine
+	//%2==0, if task contains 
+	//%3==0, if competence weight sum for one competence is > 1
+	//%5==0, if competence has neither prerequisites nor successors
+	//%7==0, if taskweights do not sum up to one
+	public boolean isDataValid(){
+		validationCode=clazz.isDataValid();
+		return validationCode==1 ? true : false;
+	}
+	
+	public String getErrorXML(){
+		String xml = "<structurvalidation>";
+		if(validationCode ==0)
+			return null;
+		if(validationCode ==1)
+			xml+="<status>valid</status>";
+		else
+			xml+="<status>unvalid</status>";
+		if(validationCode%2==0){
+			xml+="<errorcode>There is an competence assigned to a task, which doesn't exist in the competence structure.<errorcode>";
+		}
+		if(validationCode%7==0){
+			xml+="<errorcode>Competence-Weights assigned to task do not sum up to 1.<errorcode>";
+		}
+		if(validationCode%3==0){
+			xml+="<errorcode>There is an competence for which competence weights sum up > 1.<errorcode>";
+		}
+		if(validationCode%5==0){
+			xml+="<errorcode>There is an isolated competence.<errorcode>";
+		}
+		xml +="</structurvalidation>";
+		return (xml);
+	}
+}

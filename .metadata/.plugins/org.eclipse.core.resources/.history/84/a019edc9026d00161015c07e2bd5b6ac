@@ -1,0 +1,67 @@
+package knowledgestructureelements;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
+import test2.DBConnector;
+
+public class Clazz {
+	public CompetenceStructure competenceStructure;
+	public TaskCollection taskCollection;
+	public int classId;
+	public int cstructureId;
+
+	public Clazz(int classId){
+		this.classId = classId;
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		this.competenceStructure = DBConnector.getCompetenceStructure(cstructureId);
+		this.taskCollection = DBConnector.getTaskCollectionByClassId(classId, competenceStructure);
+	}
+	
+
+	public Clazz(String xml) throws ParserConfigurationException, SAXException, IOException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		builder = factory.newDocumentBuilder();		
+		StringBuilder xmlStringBuilder = new StringBuilder();
+		xmlStringBuilder.append(xml);
+		ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+		doc = builder.parse(input);
+		//doc.getElementsByTagName("competencestructure").item(0).getFirstChild().getNodeValue()
+		//Node compstructure = doc.getElementsByTagName("competencestructure").item(0).getFirstChild();
+		//Node taskcol = doc.getElementsByTagName("taskcollection").item(0).getFirstChild();
+		
+		Node n = doc.getElementsByTagName("competencestructure").item(0);
+		Document d = n.getOwnerDocument();
+		String s = d.getElementsByTagName("competence").item(0).getOwnerDocument().getElementsByTagName("name").item(0).getFirstChild().getNodeValue();
+		System.out.println(s);
+	}
+	
+	public String getDiagnosticString(){
+		String str = "***********************************************\nPrint Class:";
+		str += this.competenceStructure.getDiagnosticString();
+		str += this.taskCollection.getDiagnosticString();
+		return str+"***********************************************";
+	}
+	
+	public int isDataValid(){
+		return competenceStructure.isDataValid() * taskCollection.isDataValid(competenceStructure.competences);
+	}
+	
+	public String toXML(){
+		String xml ="<class>";
+		xml+="<competencestructure>"+this.competenceStructure.toXML()+"</competencestructure>";
+		xml+="<taskcollection>"+this.taskCollection.toXML()+"</taskcollection>";
+		xml+="</class>";
+		return xml;
+	}
+}

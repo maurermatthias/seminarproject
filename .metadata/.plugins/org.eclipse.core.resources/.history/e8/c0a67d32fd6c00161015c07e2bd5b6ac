@@ -1,0 +1,73 @@
+package knowledgestructureelements;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Competence {
+	
+	public String name;
+	public List<Edge> prerequisites = new ArrayList<Edge>();
+	public List<Edge> successors =  new ArrayList<Edge>();
+		
+	public Competence(){}
+	
+	public Competence(String name){
+		this.name = name;
+	}
+	
+	public Competence getPrerequisiteCompetence(String name){
+		for(Edge edge:prerequisites)
+			if(edge.from.name.equals(name))
+				return edge.from;
+		return null;
+	}
+	
+	public Competence getSuccessorCompetence(String name){
+		for(Edge edge:successors)
+			if(edge.to.name.equals(name))
+				return edge.to;
+		return null;
+	}
+	
+	public boolean addPrerequisite(Edge edge){
+		if(getPrerequisiteCompetence(edge.from.name) == null){
+			prerequisites.add(edge);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean addSuccessor(Edge edge){
+		if(getSuccessorCompetence(edge.to.name) == null){
+			successors.add(edge);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean removeSuccessor(Edge edge){
+		Competence com = getSuccessorCompetence(edge.to.name);
+		if(com == null){
+			return false;
+		}
+		return successors.remove(com);
+	}
+
+	public String getDiagnosticString(){
+		String str = "Competence '"+name+"':\n";
+		str+="Prerequisites:\n";
+		for(Edge edge : prerequisites)
+			str+="-"+edge.from.name +"("+edge.weight+")\n";
+		str+="Successors:\n";
+		for(Edge edge : successors)
+			str+="-"+edge.to.name +"("+edge.weight+")\n";
+		return str;
+	}
+	
+	public String toXML(){
+		String xml = "<competence>";
+		xml+="<name>"+name+"</name>";
+		xml+="</competence>";
+		return xml;
+	}
+}

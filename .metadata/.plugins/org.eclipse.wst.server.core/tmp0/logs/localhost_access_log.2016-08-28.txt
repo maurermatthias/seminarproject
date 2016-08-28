@@ -1,0 +1,3 @@
+192.168.178.52 - - [28/Aug/2016:08:39:23 +0200] "GET /test2/rest/login?name=student1&password=student1 HTTP/1.1" 200 588
+127.0.0.1 - - [28/Aug/2016:16:25:38 +0200] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [28/Aug/2016:16:25:38 +0200] "GET /test2/WEB-INF/classes/test2/Class1.java HTTP/1.1" 404 949
