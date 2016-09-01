@@ -1322,6 +1322,7 @@ public class DBConnector {
 		DBcompetencestructure competencestructure = new DBcompetencestructure("CS1","desc. CS1",getUserId("teacher1"),Visibility.ALL);
 		addNewCompetenceStructure(competencestructure);
 		
+
 		DBcompetenceweight wei1 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C1"),getCompetenceIdByName("C3"),0.3);
 		addNewCompetenceWeight(wei1);
 		DBcompetenceweight wei2 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C2"),getCompetenceIdByName("C3"),0.4);
@@ -1330,6 +1331,12 @@ public class DBConnector {
 		addNewCompetenceWeight(wei3);
 		DBcompetenceweight wei4 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C4"),getCompetenceIdByName("C5"),0.2);
 		addNewCompetenceWeight(wei4);
+
+		
+		///*    ADD CIRCLES
+		DBcompetenceweight wei5 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C5"),getCompetenceIdByName("C2"),0.5);
+		addNewCompetenceWeight(wei5);
+
 		
 		//create tasks for teacher1
 		DBtask task1 = new DBtask("task1","desc1","frage1","antw1",getUserId("teacher1"),Visibility.ALL);

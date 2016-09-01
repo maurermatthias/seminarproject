@@ -1,6 +1,7 @@
 package knowledgestructureelements;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -183,7 +184,36 @@ public class CompetenceStructure {
 		Double val = 0.0;
 		BigDecimal sum;
 		if(containsCircles()){
-			rcam = DoubleMatrix.zeros(competences.size(), competences.size());
+			//circle START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			//1) calculate circle lengths
+			List<Integer> circleLengths = new ArrayList<Integer>();
+			DoubleMatrix Wk = DoubleMatrix.eye(competences.size());
+			for(int i =1;i<=competences.size();i++){
+				Wk=Wk.mmul(cam);
+				if(this.getDiagonalSum(Wk)>0)
+					circleLengths.add(i);
+			}
+			//3) calculate GCD of all circlelength
+			int LCM = getLCM(circleLengths);
+			//4) sum up Wk and without diag, and diag in vector
+			Wk = DoubleMatrix.eye(competences.size());
+			DoubleMatrix Sk = DoubleMatrix.zeros(competences.size(), competences.size());
+			DoubleMatrix v = DoubleMatrix.zeros(1, competences.size());
+			DoubleMatrix wLCM = DoubleMatrix.zeros(1, competences.size());
+			for(int i =1;i<=LCM;i++){
+				Wk=Wk.mmul(cam);
+				Sk = Sk.add(Wk.sub(DoubleMatrix.diag(this.getDiagVec(Wk))));
+				if(i<LCM)
+					v = v.add(this.getDiagVec(Wk));
+				else
+					wLCM= this.getDiagVec(Wk);
+			}
+			DoubleMatrix D = elementwiseInverse(DoubleMatrix.ones(competences.size(), 
+					competences.size()).sub(this.createMatrixFromRow(wLCM)));
+			DoubleMatrix WM  = this.createMatrixFromColumn(ccwv);
+			DoubleMatrix res = 	WM.mul(Sk.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))).mul(D);
+			rcam = res;
+			//circles END++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		}else{
 			DoubleMatrix ccwvMatrix = DoubleMatrix.diag(ccwv);
 			DoubleMatrix sumOfMatrixProducts = sumOfPotentiatedMatrices(cam,competences.size());
@@ -231,7 +261,8 @@ public class CompetenceStructure {
 		for(int i =0;i<competenceNames.size();i++){
 			String line = competenceNames.get(i)+seperation;
 			for(int j =0;j<competenceNames.size();j++){
-				line+=extendToLength(Double.toString(matrix.get(i, j)),4)+seperation;
+				double nr = Math.round(100*matrix.get(i, j))/100.0;
+				line+=extendToLength(Double.toString(nr),4)+seperation;
 			}
 			line += "\n";
 			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
@@ -301,6 +332,86 @@ public class CompetenceStructure {
 		return retMatrix;
 	}
 	
+	private Double getDiagonalSum(DoubleMatrix matrix){
+		double sum = 0.0;
+		for(int i=0;i<matrix.columns;i++)
+			sum+=matrix.get(i, i);
+		return sum;
+	}
+
+	private Integer getLCM(List<Integer> list){
+		long[] listlong = new long[list.size()];
+		for(int i=0;i<list.size();i++)
+			listlong[i]= (long) list.get(i);
+		return (int) lcm(listlong);
+		
+	}
+	
+	private static long gcd(long a, long b)
+	{
+	    while (b > 0)
+	    {
+	        long temp = b;
+	        b = a % b; // % is remainder
+	        a = temp;
+	    }
+	    return a;
+	}
+
+	private static long lcm(long a, long b)
+	{
+	    return a * (b / gcd(a, b));
+	}
+
+	private static long lcm(long[] input)
+	{
+	    long result = input[0];
+	    for(int i = 1; i < input.length; i++) result = lcm(result, input[i]);
+	    return result;
+	}
+
+	private DoubleMatrix substractDiag(DoubleMatrix matrix){
+		for(int i=0;i<matrix.columns;i++)
+			matrix.put(i,i,0.0);
+		return matrix;
+	}
+	
+	private DoubleMatrix getDiagVec(DoubleMatrix matrix){
+		DoubleMatrix vector = new DoubleMatrix(1,matrix.columns);
+		for(int i=0;i<matrix.columns;i++)
+			vector.put(0, i,matrix.get(i, i));
+		return vector;
+	}
+
+	private DoubleMatrix createMatrixFromColumn(DoubleMatrix vector){
+		DoubleMatrix matrix = new DoubleMatrix(vector.columns,vector.columns);
+		for(int i=0;i<vector.columns;i++){
+			for(int j=0; j<vector.columns;j++){
+				matrix.put(i,j, vector.get(0,i));
+			}
+		}
+		return matrix;
+	}
+
+	private DoubleMatrix createMatrixFromRow(DoubleMatrix vector){
+		DoubleMatrix matrix = new DoubleMatrix(vector.columns,vector.columns);
+		for(int i=0;i<vector.columns;i++){
+			for(int j=0; j<vector.columns;j++){
+				matrix.put(i,j, vector.get(0,j));
+			}
+		}
+		return matrix;
+	}
+
+	private DoubleMatrix elementwiseInverse(DoubleMatrix matrixIn){
+		DoubleMatrix matrixOut = new DoubleMatrix(matrixIn.columns,matrixIn.columns);
+		for(int i=0;i<matrixIn.columns;i++){
+			for(int j=0;j<matrixIn.columns;j++){
+				matrixOut.put(i,j, 1/matrixIn.get(i,j));
+			}
+		}
+		return matrixOut;
+	}
 }
 
 
