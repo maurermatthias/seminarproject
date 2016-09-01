@@ -114,14 +114,12 @@ public class XMLCreator {
 		else
 			return updateFail(type);
 	}
-	
 	public String updateFail(){
 		String xml ="<update>";
 		xml+="<status>failure</status>";
 		xml+="</update>";
 		return(xml);
 	}
-	
 	public String updateSuccess(String type){
 		String xml ="<update>";
 		xml+="<status>success</status>";
@@ -129,14 +127,12 @@ public class XMLCreator {
 		xml+="</update>";
 		return(xml);
 	}
-	
 	public String updateSuccess(){
 		String xml ="<update>";
 		xml+="<status>success</status>";
 		xml+="</update>";
 		return(xml);
 	}
-	
 	public String updateFail(String type){
 		String xml ="<update>";
 		xml+="<status>failure</status>";
@@ -263,14 +259,12 @@ public class XMLCreator {
 		else
 			return deleteFail(type);
 	}
-	
 	public String deleteFail(){
 		String xml ="<delete>";
 		xml+="<status>failure</status>";
 		xml+="</delete>";
 		return(xml);
 	}
-	
 	public String deleteSuccess(String type){
 		String xml ="<delete>";
 		xml+="<status>success</status>";
@@ -278,14 +272,12 @@ public class XMLCreator {
 		xml+="</delete>";
 		return(xml);
 	}
-	
 	public String deleteSuccess(){
 		String xml ="<delete>";
 		xml+="<status>success</status>";
 		xml+="</delete>";
 		return(xml);
 	}
-	
 	public String deleteFail(String type){
 		String xml ="<delete>";
 		xml+="<status>failure</status>";
@@ -312,8 +304,9 @@ public class XMLCreator {
 		StudentInClass studentInClass = new StudentInClass(classid,this.userId);
 		Task task = studentInClass.getNextTask();
 		
+		//no further task useful
 		if(task == null)
-			return getNextTaskFail();
+			return Task.toXMLComplete();
 		
 		return task.toXML();
 	}
@@ -669,6 +662,86 @@ public class XMLCreator {
 	//                 ELSE
 	//***************************************************************
 	
+	public String setClassActive(String xml){
+		
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return setClassFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String classname = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			classname = doc.getElementsByTagName("setclassactive").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return setClassFail();
+		}
+		
+		Clazz clazz = new Clazz(DBConnector.getClassIdByName(classname));
+		DBclass dbclass = DBConnector.getClassById(DBConnector.getClassIdByName(classname));
+		if(dbclass.creator==this.userId){
+			if(clazz.setActive())
+				return setClassSuccess();
+			else
+				return setClassFail();
+		}else
+			return setClassFail();
+	}
+
+	public String setClassInactive(String xml){
+		
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return setClassFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		String classname = "";
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+			classname = doc.getElementsByTagName("setclassinactive").item(0).getFirstChild().getNodeValue();
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return setClassFail();
+		}
+		
+		Clazz clazz = new Clazz(DBConnector.getClassIdByName(classname));
+		DBclass dbclass = DBConnector.getClassById(DBConnector.getClassIdByName(classname));
+		if(dbclass.creator==this.userId){
+			if(DBConnector.deleteActiveClass(classname))
+				return setClassSuccess();
+			else
+				return setClassFail();
+		}else
+			return setClassFail();
+	}
+	
+	public String setClassSuccess(){
+		String xml ="<setclass>";
+		xml+="<status>success</status>";
+		xml+="</setclass>";
+		return(xml); 
+	}	
+	
+	public String setClassFail(){
+		String xml ="<setclass>";
+		xml+="<status>failure</status>";
+		xml+="</setclass>";
+		return(xml);
+	}
+
 	public static String prettyFormat(String xml){
 		String newline = System.getProperty("line.separator");
 		return prettyFormat("",xml.replace(newline, ""),0,true);

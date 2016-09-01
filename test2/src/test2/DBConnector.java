@@ -170,7 +170,6 @@ public class DBConnector {
 		    }
 		}
 	}
-	
 	public static void createTable(String type){
         String usertable = "";
         
@@ -233,6 +232,7 @@ public class DBConnector {
 	                    + "name TEXT,"  
 	                    + "description TEXT,"  
 	                    + "visibility Int(4),"
+	                    + "date TEXT,"
 	                    + "data TEXT,"
 	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    + "PRIMARY KEY (classid))"; 
@@ -564,6 +564,7 @@ public class DBConnector {
 		        		acl.classid = rs.getInt("classid");
 		        		acl.creator = rs.getInt("creator");
 		        		acl.name = rs.getString("name");
+		        		acl.date = rs.getString("date");
 		        		acl.description = rs.getString("description");
 		        		acl.visibility = Visibility.fromInteger(rs.getInt("visibility"));
 		        		acl.data = rs.getString("data");
@@ -898,11 +899,15 @@ public class DBConnector {
 		else 
 			return ((DBcompetencevalue)entities.get(0)).value;
 	}
-	public static Clazz getActiveClazzByName(String name){
+	public static DBactiveclass getActiveClassByName(String name){
 		List<DBentity> entities = select("activeclasses","name='"+name+"'");
 		if(entities.isEmpty())
 			return null;
 		DBactiveclass aclazz = (DBactiveclass) entities.get(0);
+		return aclazz;
+	}
+	public static Clazz getActiveClazzByName(String name){
+		DBactiveclass aclazz = getActiveClassByName(name);
 		Clazz clazz;
 		try {
 			clazz = new Clazz(aclazz.data);
@@ -976,8 +981,8 @@ public class DBConnector {
 		    	break;
 		    case "activeclasses":
 		    	DBactiveclass acl = (DBactiveclass) entity;
-		    	cmd += "(creator,name,description,visibility,data) VALUES ";
-		    	cmd += "("+acl.creator+",'"+acl.name+"','"+acl.description+"',"+Visibility.toInteger(acl.visibility)+",'"+acl.data+"');";
+		    	cmd += "(creator,name,description,visibility,data,date) VALUES ";
+		    	cmd += "("+acl.creator+",'"+acl.name+"','"+acl.description+"',"+Visibility.toInteger(acl.visibility)+",'"+acl.data+"','"+acl.date+"');";
 		    	execute(cmd);
 		    	break;
 		    case "linkageclasstask":
@@ -1321,9 +1326,9 @@ public class DBConnector {
 		addNewCompetenceWeight(wei1);
 		DBcompetenceweight wei2 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C2"),getCompetenceIdByName("C3"),0.4);
 		addNewCompetenceWeight(wei2);
-		DBcompetenceweight wei3 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C3"),getCompetenceIdByName("C5"),0.35);
+		DBcompetenceweight wei3 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C3"),getCompetenceIdByName("C5"),0.6);
 		addNewCompetenceWeight(wei3);
-		DBcompetenceweight wei4 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C4"),getCompetenceIdByName("C5"),0.45);
+		DBcompetenceweight wei4 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C4"),getCompetenceIdByName("C5"),0.2);
 		addNewCompetenceWeight(wei4);
 		
 		//create tasks for teacher1

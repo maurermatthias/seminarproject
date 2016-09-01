@@ -105,6 +105,26 @@ public class Class1 {
 		XMLCreator xmlc = new XMLCreator(userName,pwd);
 		return returnString(XMLCreator.prettyFormat(xmlc.updateCompetencestate(body)));
 	}
+	
+	//set class active
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("setClassActive")
+	public Response setClassActive(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.setClassActive(body)));
+	}
+
+	//set class inactive
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("setClassInactive")
+	public Response setClassInactive(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.setClassInactive(body)));
+	}
   /*
   
   @GET

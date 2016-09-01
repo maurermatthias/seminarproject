@@ -30,6 +30,10 @@ public class TaskCollection {
 	
 	public int isDataValid(List<Competence> competences){
 		int retVal=1;
+		
+		if(tasks.size()==0)
+			return 13;
+		
 		for(Task task : tasks){
 			Double sum =0.0;
 			for(Competence competence : task.weights.keySet()){

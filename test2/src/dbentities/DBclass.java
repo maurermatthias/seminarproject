@@ -6,6 +6,7 @@ import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 import org.w3c.dom.Document;
 
+import knowledgestructureelements.Clazz;
 import test2.DBConnector;
 
 @Root(name="class")
@@ -45,10 +46,13 @@ public class DBclass extends DBentity{
 		xml+="<name>"+this.name+"</name>";
 		xml+="<description>"+this.description+"</description>";
 		xml+="<id>"+this.classid+"</id>";
-		if(DBConnector.getActiveClassIdByName(this.name)==0)
+		if(DBConnector.getActiveClassIdByName(this.name)==0){
 			xml+="<active>false</active>";
-		else
+		}
+		else{
 			xml+="<active>true</active>";
+			xml+="<date>"+DBConnector.getActiveClassByName(this.name).date+"</date>";
+		}
 		DBcompetencestructure cstruct =  DBConnector.getCStructureById(DBConnector.getCstructureIdByClassId(this.classid));
 		if(cstruct != null)
 			xml +="<competencestructure>"+cstruct.name+"</competencestructure>";

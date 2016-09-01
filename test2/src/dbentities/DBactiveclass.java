@@ -1,5 +1,11 @@
 package dbentities;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
@@ -7,6 +13,7 @@ import org.simpleframework.xml.Root;
 public class DBactiveclass extends DBentity{
 	public int creator;
 	public String data;
+	public String date;
 	
 	@Element(name="visibility")
 	public Visibility visibility;
@@ -17,7 +24,18 @@ public class DBactiveclass extends DBentity{
 	@Element(name="id")
 	public int classid;
 	
-	public DBactiveclass(){}
+	@SuppressWarnings("deprecation")
+	public DBactiveclass(){
+		SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+		dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+		SimpleDateFormat dateFormatLocal = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+		try {
+			this.date = dateFormatLocal.parse( dateFormatGmt.format(new Date()) ).toGMTString();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	/*
 	public DBactiveclass(String name, String description, Visibility visibility, int creatorId){

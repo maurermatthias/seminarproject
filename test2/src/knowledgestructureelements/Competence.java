@@ -36,6 +36,13 @@ public class Competence {
 		return null;
 	}
 	
+	public Edge getSuccessorEdgeByCompetenceName(String name){
+		for(Edge edge:successors)
+			if(edge.to.name.equals(name))
+				return edge;
+		return null;
+	}
+	
 	public boolean addPrerequisite(Edge edge){
 		if(getPrerequisiteCompetence(edge.from.name) == null){
 			prerequisites.add(edge);

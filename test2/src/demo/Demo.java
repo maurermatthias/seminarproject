@@ -20,6 +20,7 @@ import org.simpleframework.xml.stream.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import dbentities.DBactiveclass;
 import dbentities.DBtask;
 import dbentities.DBuser;
 import knowledgestructureelements.Clazz;
@@ -40,63 +41,18 @@ public class Demo{
         // Prints "Hello, World" to the terminal window.
         System.out.println("START");
         
+        /*
         DBConnector.resetDB();
-        
         DBConnector.createTestData();
+        //*/
         
-        /*
-        CompetenceStructure cstruct = DBConnector.getCompetenceStructure(DBConnector.getCstructureIdByName("CS1"));
-        System.out.println(cstruct.getDiagnosticString());
-        */
-        
-        
-        ///*
         StudentInClass sic = new StudentInClass(DBConnector.getClassIdByName("class1"),DBConnector.getUserId("student1"));
-        sic.isDataValid();
-        System.out.println(XMLCreator.prettyFormat(sic.clazz.toXML()));
-        
-        Clazz cs;
-        try {
-        	String xml1=XMLCreator.prettyFormat(sic.clazz.toXML());
-			cs = new Clazz(sic.clazz.toXML());
-			System.out.println(cs.getDiagnosticString());
-			String xml2= XMLCreator.prettyFormat(cs.toXML());
-			if(xml1.equals(xml2))
-				System.out.println("WORKED");
-			else{
-				System.out.println("FAIL");
-			}
-			
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.println("ERROR");
-		}
-        
-        
-        //*/
-        
-        
-        /*
-        Clazz clazz = new Clazz(DBConnector.getClassIdByName("class1"));
-        System.out.println(clazz.getDiagnosticString());
-        //*/
-        
-        /*
-        XMLCreator xmlcreator = new XMLCreator("n","pwd");
-        String xml = XMLCreator.prettyFormat(xmlcreator.getLoginXML());
-        System.out.println(xml);
-        */
-        
-        /*
-        DBuser user = new DBuser();
-        user.creator=23;
-        user.name="testname";
-        user.password="pwd";
-        user.usergroup=1;
-        
-		DBConnector.addNewUser(user);
-		*/
+        CompetenceStructure cs =  sic.clazz.competenceStructure;
+        cs.changeCompetencePosition(1, 2);
+        cs.changeCompetencePosition(3, 4);
+        System.out.println(cs.getMatrixString(cs.getCompetenceAdjacencyMatrix(), cs.competences));
+        System.out.println(cs.getVectorString(cs.getCoreCompetenceWeightVector(), cs.competences));
+        System.out.println(cs.getMatrixString(cs.getResolvedCompetenceAdjacencyMatrix(), cs.competences));
         
 
         System.out.println("END");

@@ -58,8 +58,13 @@ public class Task {
 	}
 	
 	public String toXML(){
-		String xml = "<task><question>"+this.question+
-				"</question><taskid>"+this.taskid+"</taskid></task>";
+		String xml = "<task><complete>false</complete><question>"+this.question+
+				"</question><taskid>"+this.taskid+"</taskid><status>success</status></task>";
+		return xml;
+	}
+	
+	public static String toXMLComplete(){
+		String xml = "<task><complete>true</complete><status>success</status></task>";
 		return xml;
 	}
 	
