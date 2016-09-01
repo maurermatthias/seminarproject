@@ -1,0 +1,316 @@
+package knowledgestructureelements;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jblas.DoubleMatrix;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+public class CompetenceStructure {
+	public List<Competence> competences = new ArrayList<Competence>();
+	private Boolean containsCircles = null;
+	
+	public CompetenceStructure(){}
+	
+	public CompetenceStructure(NodeList compstructure){
+		NodeList competencesList = compstructure;
+		//add nodes
+		for(int i=0;i<competencesList.getLength();i++){
+			Node comp = competencesList.item(i);
+			competences.add(new Competence(comp));
+		}
+		//add edges
+		for(int i=0;i<competencesList.getLength();i++){
+			String to = competencesList.item(i).getFirstChild().getFirstChild().getNodeValue();
+			NodeList prerequisites = competencesList.item(i).getFirstChild().getNextSibling().getChildNodes();
+			for(int j=0;j<prerequisites.getLength();j++){
+				String from = prerequisites.item(j).getFirstChild().getNextSibling().getFirstChild().getNodeValue();
+				String weight = prerequisites.item(j).getFirstChild().getFirstChild().getNodeValue();
+				addEdge(from,to,Double.parseDouble(weight));
+			}
+		}
+	}
+	
+	public boolean addEdge(String fromName, String toName, double weight){
+		Competence from = getCompetenceByName(fromName);
+		Competence to = getCompetenceByName(toName);
+		if(from == null || to == null)
+			System.out.print("ERROR - competence not found!('"+fromName+"' OR '"+toName+"')");
+		Edge edge = new Edge(from, to, weight);
+		if(from.addSuccessor(edge)){
+			if(to.addPrerequisite(edge)){
+				return true;
+			}
+			else{
+				from.removeSuccessor(edge);
+				return false;
+			}
+		}
+		else
+			return false;
+	}
+	
+	public boolean addCompetence(Competence competence){
+		if(getCompetenceByName(competence.name)==null){
+			competences.add(competence);
+			return true;
+		}
+		return false;
+	}
+	
+	public Competence getCompetenceByName(String name){
+		for(Competence competence: competences)
+			if(competence.name.equals(name))
+				return competence;
+		return null;
+	}
+
+	public String getDiagnosticString(){
+		String str = "Print out competence structure:\n";
+		for(Competence competence : competences)
+			str += competence.getDiagnosticString();
+		return str;
+	}
+	
+	public List<Competence> getAllIndirectPrerequisites(Competence competence){
+		if(containsCircles()){
+			System.out.println("Method getAllIndirectPrerequisites not callable - structure contains circles!");
+			return null;
+		}
+		
+		if(competence.prerequisites.size()==0)
+			return new ArrayList<Competence>();
+		List<Competence> prerequisites = new ArrayList<Competence>();
+		for(Edge edge : competence.prerequisites){
+			if(!prerequisites.contains(edge.from)){
+				prerequisites.add(edge.from);
+				for(Competence prereq : getAllIndirectPrerequisites(edge.from)){
+					if(!prerequisites.contains(prereq)){
+						prerequisites.add(prereq);
+					}
+				}
+			}
+		}
+		return prerequisites;
+	}
+	
+	public int getTotalNumberOfPrerequisites(Competence competence){
+		return getAllIndirectPrerequisites(competence).size();
+	}
+
+	public boolean containsCircles(){
+		if(containsCircles != null)
+			return containsCircles;
+		List<Competence> allPrerequisites;
+		for(Competence competence : competences){
+			allPrerequisites = new ArrayList<Competence>();
+			for(Edge edge : competence.prerequisites)
+				allPrerequisites.add(edge.from);
+			while(allPrerequisites.size()>0){
+				Competence comp = allPrerequisites.remove(0);
+				if(comp.equals(competence)){
+					containsCircles=true;
+					return containsCircles;
+				}
+				for(Edge edge : comp.prerequisites)
+					allPrerequisites.add(edge.from);
+			}
+		}
+		containsCircles= false;
+		return containsCircles;
+	}
+
+	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate, Boolean success){
+		return null;
+	}
+
+	//are all competences linked (5)
+	//weights sum up to 1 (3)
+	public int isDataValid(){
+		int retVal = 1;
+		
+		for(Competence competence : competences){
+			Double weight = 0.0;
+			for(Edge edge : competence.prerequisites){
+				weight += edge.weight;
+			}
+			if(weight>1){
+				retVal = retVal *3; 
+			}
+			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
+				retVal = retVal *5;
+			}
+		}
+		
+		return retVal;
+	}
+
+	public String toXML(){
+		String xml="<competences>";
+		for(Competence competence : competences){
+			xml+=competence.toXML();
+		}
+		xml+="</competences>";
+		return xml;
+	}
+
+	public DoubleMatrix getCompetenceAdjacencyMatrix(){
+		DoubleMatrix cam = new DoubleMatrix(competences.size(),competences.size());
+		Edge edge;
+		Competence competence;
+		for(int i=0;i<competences.size();i++){
+			competence = competences.get(i);
+			//by line -> successors
+			for(int j=0;j<competences.size();j++){
+				edge = competence.getSuccessorEdgeByCompetenceName(competences.get(j).name);
+				if(edge==null)
+					cam.put(i, j, 0.0);
+				else{
+					cam.put(i, j, edge.weight);
+				}
+			}
+		}
+		return cam;
+	}
+	
+	public DoubleMatrix getResolvedCompetenceAdjacencyMatrix(){
+		DoubleMatrix rcam = new DoubleMatrix(competences.size(),competences.size());
+		DoubleMatrix cam = getCompetenceAdjacencyMatrix();
+		DoubleMatrix ccwv = getCoreCompetenceWeightVector();
+		Double val = 0.0;
+		BigDecimal sum;
+		if(containsCircles()){
+			rcam = DoubleMatrix.zeros(competences.size(), competences.size());
+		}else{
+			DoubleMatrix ccwvMatrix = vectorToDiagonalMatrix(ccwv);
+			rcam = ccwvMatrix;//sumOfPotentiatedMatrices(cam,competences.size());
+		}
+		return rcam;
+	}
+	
+	public DoubleMatrix getCoreCompetenceWeightVector(){
+		DoubleMatrix ccwv = new DoubleMatrix(1,competences.size());
+		Competence competence;
+		BigDecimal sum;
+		for(int i=0;i<competences.size();i++){
+			competence = competences.get(i);
+			sum=BigDecimal.valueOf(0.0);
+			for(Edge edge : competence.prerequisites){
+				sum=sum.add(BigDecimal.valueOf(edge.weight));
+			}
+			ccwv.put(0,i, BigDecimal.valueOf(1.0).subtract(sum).doubleValue());
+		}
+		return ccwv;
+	}
+	
+	public String getMatrixString(DoubleMatrix matrix,List<Competence> competences){
+		int namelength = 4;
+		
+		List<String> competenceNames = new ArrayList<String>();
+		for(int i=0;i<competences.size();i++){
+			String name = "";
+			if(competences.get(i).name.length()<=namelength){
+				name = competences.get(i).name;
+				while(name.length()<namelength)
+					name += " ";
+			}else{
+				name = competences.get(i).name.substring(0, namelength);
+			}
+			competenceNames.add(name);
+		}
+		//first line
+		String seperation = "|";
+		String txt = getSpaces(namelength)+seperation;
+		for(int i=0;i<competenceNames.size();i++)
+			txt+=competenceNames.get(i)+seperation;
+		txt+="\n";
+		for(int i =0;i<competenceNames.size();i++){
+			String line = competenceNames.get(i)+seperation;
+			for(int j =0;j<competenceNames.size();j++){
+				line+=extendToLength(Double.toString(matrix.get(i, j)),4)+seperation;
+			}
+			line += "\n";
+			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
+			txt+=line;
+		}
+		return txt;
+	}
+
+	public String getVectorString(DoubleMatrix matrix,List<Competence> competences){
+		int namelength = 4;
+		
+		List<String> competenceNames = new ArrayList<String>();
+		for(int i=0;i<competences.size();i++){
+			String name = "";
+			if(competences.get(i).name.length()<=namelength){
+				name = competences.get(i).name;
+				while(name.length()<namelength)
+					name += " ";
+			}else{
+				name = competences.get(i).name.substring(0, namelength);
+			}
+			competenceNames.add(name);
+		}
+		//first line
+		String seperation = "|";
+		String txt = "";
+		for(int i =0;i<competenceNames.size();i++){
+			String line = competenceNames.get(i)+seperation;
+			line += extendToLength(Double.toString(matrix.get(0, i)),4)+"\n";
+			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
+			txt+=line;
+		}
+		return txt;
+	}
+	
+	private String getSpaces(int length){
+		return extendToLength("",length);
+	}
+	
+	private String extendToLength(String text, int length){
+		while(text.length()<length)
+			text += " ";
+		return text;
+	}
+	
+	public void changeCompetencePosition(int one, int two){
+		Competence competence = competences.get(one);
+		competences.set(one, competences.get(two));
+		competences.set(two, competence);
+	}
+
+	private DoubleMatrix potentiateMatrix(DoubleMatrix matrix, int i){
+		if(i==0)
+			return DoubleMatrix.eye(matrix.columns);
+		if(i==1)
+			return matrix;
+		DoubleMatrix result = matrix;
+		for(int j=2;j<=i;j++)
+			result = result.mmul(matrix);
+		return result;
+	}
+	
+	private DoubleMatrix sumOfPotentiatedMatrices(DoubleMatrix matrix, int times){
+		DoubleMatrix retMatrix = potentiateMatrix(matrix,0);
+		for(int i=1;i<=times;i++)
+			retMatrix = retMatrix.add(potentiateMatrix(matrix,i));
+		return retMatrix;
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

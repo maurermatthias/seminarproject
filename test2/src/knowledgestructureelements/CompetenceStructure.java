@@ -185,19 +185,9 @@ public class CompetenceStructure {
 		if(containsCircles()){
 			rcam = DoubleMatrix.zeros(competences.size(), competences.size());
 		}else{
-			rcam = potentiateMatrix(cam,2);
-			/*
-			for(int line=0;line<competences.size();line++){
-				for(int column=0;column<competences.size();column++){
-					sum=BigDecimal.valueOf(0.0);
-					for(int k=1;k<=competences.size();k++){
-
-					}
-					val = 1.0;
-					rcam.put(line,column, val);
-				}
-			}
-			*/
+			DoubleMatrix ccwvMatrix = DoubleMatrix.diag(ccwv);
+			DoubleMatrix sumOfMatrixProducts = sumOfPotentiatedMatrices(cam,competences.size());
+			rcam = ccwvMatrix.mmul(sumOfMatrixProducts);
 		}
 		return rcam;
 	}
@@ -294,11 +284,23 @@ public class CompetenceStructure {
 	}
 
 	private DoubleMatrix potentiateMatrix(DoubleMatrix matrix, int i){
+		if(i==0)
+			return DoubleMatrix.eye(matrix.columns);
+		if(i==1)
+			return matrix;
 		DoubleMatrix result = matrix;
 		for(int j=2;j<=i;j++)
 			result = result.mmul(matrix);
 		return result;
 	}
+	
+	private DoubleMatrix sumOfPotentiatedMatrices(DoubleMatrix matrix, int times){
+		DoubleMatrix retMatrix = potentiateMatrix(matrix,0);
+		for(int i=1;i<=times;i++)
+			retMatrix = retMatrix.add(potentiateMatrix(matrix,i));
+		return retMatrix;
+	}
+	
 }
 
 
