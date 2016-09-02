@@ -1,0 +1,27 @@
+package dbentities;
+
+import org.w3c.dom.Document;
+
+public class DBcompetencevalue extends DBentity {
+
+	public int id;
+	public int studentid;
+	public int classid;
+	public int competenceid;
+	public double value; 
+	public double denominator;
+	public double numerator;
+	public int n;
+
+	
+	public DBcompetencevalue() {}
+	
+	public DBcompetencevalue(int studentid, int classid, int competenceid, double value){
+		this.classid = classid;
+		this.studentid = studentid;
+		this.competenceid = competenceid;
+		this.value = value;
+	}
+	
+	
+}
