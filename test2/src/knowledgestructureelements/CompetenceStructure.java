@@ -197,22 +197,27 @@ public class CompetenceStructure {
 			int LCM = getLCM(circleLengths);
 			//4) sum up Wk and without diag, and diag in vector
 			Wk = DoubleMatrix.eye(competences.size());
-			DoubleMatrix Sk = DoubleMatrix.zeros(competences.size(), competences.size());
+			//DoubleMatrix Sk = DoubleMatrix.zeros(competences.size(),competences.size());
+			DoubleMatrix Sk = DoubleMatrix.eye(competences.size());
 			DoubleMatrix v = DoubleMatrix.zeros(1, competences.size());
 			DoubleMatrix wLCM = DoubleMatrix.zeros(1, competences.size());
-			for(int i =1;i<=LCM;i++){
+			for(int i =1;i<=50*LCM;i++){
 				Wk=Wk.mmul(cam);
-				Sk = Sk.add(Wk.sub(DoubleMatrix.diag(this.getDiagVec(Wk))));
+				Sk = Sk.add(Wk/*.sub(DoubleMatrix.diag(this.getDiagVec(Wk)))*/);
+				/*
 				if(i<LCM)
 					v = v.add(this.getDiagVec(Wk));
 				else
 					wLCM= this.getDiagVec(Wk);
+				*/
 			}
+			wLCM= this.getDiagVec(Wk);
 			DoubleMatrix D = elementwiseInverse(DoubleMatrix.ones(competences.size(), 
 					competences.size()).sub(this.createMatrixFromRow(wLCM)));
 			DoubleMatrix WM  = this.createMatrixFromColumn(ccwv);
-			DoubleMatrix res = 	WM.mul(Sk.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))).mul(D);
+			DoubleMatrix res = 	WM.mul(Sk/*.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))*/).mul(D);
 			rcam = res;
+			System.out.println(this.getVectorString(v, competences));
 			//circles END++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		}else{
 			DoubleMatrix ccwvMatrix = DoubleMatrix.diag(ccwv);
@@ -238,7 +243,7 @@ public class CompetenceStructure {
 	}
 	
 	public String getMatrixString(DoubleMatrix matrix,List<Competence> competences){
-		int namelength = 4;
+		int namelength = 5;
 		
 		List<String> competenceNames = new ArrayList<String>();
 		for(int i=0;i<competences.size();i++){
@@ -258,16 +263,27 @@ public class CompetenceStructure {
 		for(int i=0;i<competenceNames.size();i++)
 			txt+=competenceNames.get(i)+seperation;
 		txt+="\n";
+		BigDecimal[] sum = new BigDecimal[competenceNames.size()];
+		for(int i =0;i<competenceNames.size();i++)
+			sum[i] = BigDecimal.valueOf(0.0);
 		for(int i =0;i<competenceNames.size();i++){
 			String line = competenceNames.get(i)+seperation;
 			for(int j =0;j<competenceNames.size();j++){
-				double nr = Math.round(100*matrix.get(i, j))/100.0;
-				line+=extendToLength(Double.toString(nr),4)+seperation;
+				double div = 1;
+				for(int k=2;k<namelength;k++)
+					div=div*10;
+				double nr = Math.round(div*matrix.get(i, j))/div;
+				sum[j]=sum[j].add(BigDecimal.valueOf(nr));
+				line+=extendToLength(Double.toString(nr),namelength)+seperation;
 			}
 			line += "\n";
 			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
 			txt+=line;
 		}
+		//sum line
+		txt += getSpaces(namelength)+seperation;
+		for(int i =0;i<competenceNames.size();i++)
+			txt+=extendToLength(Double.toString(sum[i].doubleValue()),namelength)+seperation;
 		return txt;
 	}
 
