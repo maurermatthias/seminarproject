@@ -1,0 +1,8 @@
+127.0.0.1 - - [02/Sep/2016:14:44:40 +0200] "GET / HTTP/1.1" 404 951
+127.0.0.1 - - [02/Sep/2016:14:44:40 +0200] "GET /test2/WEB-INF/classes/test2/Class1.java HTTP/1.1" 404 949
+192.168.178.75 - - [02/Sep/2016:14:44:57 +0200] "GET /test2/rest/login?name=student1&password=student1 HTTP/1.1" 200 287
+192.168.178.75 - - [02/Sep/2016:14:45:15 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4439
+192.168.178.75 - - [02/Sep/2016:14:47:34 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4439
+192.168.178.75 - - [02/Sep/2016:14:50:30 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4439
+192.168.178.75 - - [02/Sep/2016:14:52:25 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4439
+192.168.178.75 - - [02/Sep/2016:14:52:36 +0200] "POST /test2/rest/postEntity?name=teacher1&password=teacher1 HTTP/1.1" 200 62
