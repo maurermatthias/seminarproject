@@ -244,6 +244,9 @@ public class DBConnector {
 	                    + "classid INT(64) NOT NULL,"  
 	                    + "competenceid INT(64) NOT NULL,"  
 	                    + "value DOUBLE,"
+	                    + "denominator DOUBLE,"
+	                    + "numerator DOUBLE,"
+	                    + "n INT(64),"
 	                    + "PRIMARY KEY (id),"
 	                    + "FOREIGN KEY (studentid) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    //+ "FOREIGN KEY (classid) REFERENCES activeclasses(classid) ON DELETE CASCADE," 
@@ -488,6 +491,9 @@ public class DBConnector {
 		        		cv.id = rs.getInt("id");
 		        		cv.studentid = rs.getInt("studentid");
 		        		cv.value = rs.getDouble("value");
+		        		cv.numerator = rs.getDouble("numerator");
+		        		cv.denominator = rs.getDouble("denominator");
+		        		cv.n = rs.getInt("n");
 		        		results.add(cv);
 		        	}
 			    	break;
@@ -939,8 +945,8 @@ public class DBConnector {
 		    	break;
 		    case "competencevalues":
 		    	DBcompetencevalue cv = (DBcompetencevalue) entity;
-		    	cmd += "(competenceid,classid,studentid,value) VALUES ";
-		    	cmd += "("+cv.competenceid+","+cv.classid+","+cv.studentid+","+cv.value+");";
+		    	cmd += "(competenceid,classid,studentid,value,denominator,numerator,n) VALUES ";
+		    	cmd += "("+cv.competenceid+","+cv.classid+","+cv.studentid+","+cv.value+","+cv.denominator+","+cv.numerator+","+cv.n+");";
 		    	execute(cmd);
 		    	break;
 		    case "competences":

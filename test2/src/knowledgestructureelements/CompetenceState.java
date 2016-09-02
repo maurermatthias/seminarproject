@@ -50,14 +50,14 @@ public class CompetenceState {
 		for(Competence competence : compStr.competences){
 			Double value = 0.0;
 			map.put(competence,value);
-			DBConnector.addNewCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name), value));
+			DBConnector.addNewCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name), value,0,0,0));
 		}
 	}
 	
 	public void store(){
 		for(Competence competence : compStr.competences){
 			Double value = map.get(competence);
-			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),value));
+			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),value,0,0,0));
 		}
 	}
 	

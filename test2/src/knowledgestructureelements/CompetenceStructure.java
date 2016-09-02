@@ -181,8 +181,6 @@ public class CompetenceStructure {
 		DoubleMatrix rcam = new DoubleMatrix(competences.size(),competences.size());
 		DoubleMatrix cam = getCompetenceAdjacencyMatrix();
 		DoubleMatrix ccwv = getCoreCompetenceWeightVector();
-		Double val = 0.0;
-		BigDecimal sum;
 		if(containsCircles()){
 			//circle START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			//1) calculate circle lengths
@@ -215,9 +213,10 @@ public class CompetenceStructure {
 			DoubleMatrix D = elementwiseInverse(DoubleMatrix.ones(competences.size(), 
 					competences.size()).sub(this.createMatrixFromRow(wLCM)));
 			DoubleMatrix WM  = this.createMatrixFromColumn(ccwv);
-			DoubleMatrix res = 	WM.mul(Sk/*.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))*/).mul(D);
+			DoubleMatrix dv = elementwiseInverse(DoubleMatrix.ones(1,competences.size()).sub(wLCM));
+			DoubleMatrix res = 	DoubleMatrix.diag(ccwv).mmul(Sk/*.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))*/).mmul(DoubleMatrix.diag(dv));
 			rcam = res;
-			System.out.println(this.getVectorString(v, competences));
+			//System.out.println(this.getVectorString(v, competences));
 			//circles END++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		}else{
 			DoubleMatrix ccwvMatrix = DoubleMatrix.diag(ccwv);
@@ -420,8 +419,8 @@ public class CompetenceStructure {
 	}
 
 	private DoubleMatrix elementwiseInverse(DoubleMatrix matrixIn){
-		DoubleMatrix matrixOut = new DoubleMatrix(matrixIn.columns,matrixIn.columns);
-		for(int i=0;i<matrixIn.columns;i++){
+		DoubleMatrix matrixOut = new DoubleMatrix(matrixIn.rows,matrixIn.columns);
+		for(int i=0;i<matrixIn.rows;i++){
 			for(int j=0;j<matrixIn.columns;j++){
 				matrixOut.put(i,j, 1/matrixIn.get(i,j));
 			}

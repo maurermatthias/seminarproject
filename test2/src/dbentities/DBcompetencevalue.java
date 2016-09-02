@@ -9,14 +9,21 @@ public class DBcompetencevalue extends DBentity {
 	public int classid;
 	public int competenceid;
 	public double value; 
+	public double denominator;
+	public double numerator;
+	public int n;
+
 	
 	public DBcompetencevalue() {}
 	
-	public DBcompetencevalue(int studentid, int classid, int competenceid, double value){
+	public DBcompetencevalue(int studentid, int classid, int competenceid, double value, double denominator, double numerator, int n){
 		this.classid = classid;
 		this.studentid = studentid;
 		this.competenceid = competenceid;
 		this.value = value;
+		this.denominator = denominator;
+		this.numerator = numerator;
+		this.n = n;
 	}
 	
 	
