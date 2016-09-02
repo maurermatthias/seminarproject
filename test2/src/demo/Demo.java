@@ -41,7 +41,7 @@ public class Demo{
         // Prints "Hello, World" to the terminal window.
         System.out.println("START");
         
-        /*
+        ///*
         DBConnector.resetDB();
         DBConnector.createTestData();
         //*/

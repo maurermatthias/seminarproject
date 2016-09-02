@@ -8,7 +8,10 @@ import dbentities.DBcompetencevalue;
 import test2.DBConnector;
 
 public class CompetenceState {
-	HashMap<Competence, Double> map = new HashMap<Competence, Double>();
+	HashMap<Competence, Double> competencevalues = new HashMap<Competence, Double>();
+	HashMap<Competence, Double> denominatorvalues = new HashMap<Competence, Double>();
+	HashMap<Competence, Double> numeratorvalues = new HashMap<Competence, Double>();
+	HashMap<Competence, Integer> nvalues = new HashMap<Competence, Integer>();
 	public int cstructureId;
 	public int studentId;
 	public int classId;
@@ -33,12 +36,15 @@ public class CompetenceState {
 	private void loadCompetenceState(){
 		Boolean initialiseCompetenceState = false;
 		for(Competence competence : compStr.competences){
-			Double value = DBConnector.getCompetenceValue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name));
-			if(value == -1){
+			DBcompetencevalue cv = DBConnector.getCompetenceValueEntry(studentId, classId, DBConnector.getCompetenceIdByName(competence.name));
+			if(cv == null){
 				initialiseCompetenceState = true;
 				break;
 			}
-			map.put(competence,value);
+			competencevalues.put(competence,cv.value);
+			denominatorvalues.put(competence,cv.denominator);
+			numeratorvalues.put(competence,cv.numerator);
+			nvalues.put(competence,cv.n);
 		}
 		if(initialiseCompetenceState)
 			setInitialCompetenceState();
@@ -48,22 +54,33 @@ public class CompetenceState {
 	private void setInitialCompetenceState(){
 		//create initial competence state -> watch out when having circles!
 		for(Competence competence : compStr.competences){
-			Double value = 0.0;
-			map.put(competence,value);
-			DBConnector.addNewCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name), value,0,0,0));
+			Double value = 0.5;
+			Double numerator = 1.0;
+			Double denominator = 2.0;
+			Integer n = 1;
+			competencevalues.put(competence,value);
+			denominatorvalues.put(competence,denominator);
+			numeratorvalues.put(competence,numerator);
+			nvalues.put(competence,n);
+			DBConnector.addNewCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name), 
+					value,denominator,numerator,n));
 		}
 	}
 	
 	public void store(){
 		for(Competence competence : compStr.competences){
-			Double value = map.get(competence);
-			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),value,0,0,0));
+			Double value = competencevalues.get(competence);
+			Double denominator = denominatorvalues.get(competence);
+			Double numerator = numeratorvalues.get(competence);
+			Integer n = nvalues.get(competence);
+			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),
+					value,denominator,numerator,n));
 		}
 	}
 	
 	public String toXML(){
 		String xml = "<competencestate>";
-		for (Map.Entry<Competence,Double> entry : map.entrySet()) {
+		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
 		    xml+= "<competencevalue>";
 		    xml += "<competence>"+entry.getKey().name+"</competence>";
 		    xml += "<value>"+entry.getValue().doubleValue()+"</value>";
@@ -75,7 +92,7 @@ public class CompetenceState {
 	
 	public String getDiagnosticString(){
 		String str = "Competence state:\n";
-		for (Map.Entry<Competence,Double> entry : map.entrySet()) {
+		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
 		    str+="    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
 		}
 		return str;

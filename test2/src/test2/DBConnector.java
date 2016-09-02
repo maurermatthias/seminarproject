@@ -202,6 +202,7 @@ public class DBConnector {
 	                    + "visibility Int(4),"
 	                    + "text TEXT,"  
 	                    + "answer TEXT,"
+	                    + "authenticity DOUBLE,"
 	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    + "PRIMARY KEY (taskid))"; 
 	            break;
@@ -518,6 +519,7 @@ public class DBConnector {
 		        		t.visibility = Visibility.fromInteger(rs.getInt("visibility"));
 		        		t.text = rs.getString("text");
 		        		t.answer = rs.getString("answer");
+		        		t.authenticity = rs.getDouble("authenticity");
 		        		results.add(t);
 		        	}
 			    	break;
@@ -898,12 +900,12 @@ public class DBConnector {
 		else 
 			return ((DBlinkageclasscstructure)entities.get(0)).cstructureid;
 	}
-	public static double getCompetenceValue(int studentid,int classid,int competenceid){
+	public static DBcompetencevalue getCompetenceValueEntry(int studentid,int classid,int competenceid){
 		List<DBentity> entities = select("competencevalues","classid="+classid+" AND studentid="+studentid+" AND competenceid="+competenceid);
 		if(entities.isEmpty())
-			return -1.0;
+			return null;
 		else 
-			return ((DBcompetencevalue)entities.get(0)).value;
+			return ((DBcompetencevalue)entities.get(0));
 	}
 	public static DBactiveclass getActiveClassByName(String name){
 		List<DBentity> entities = select("activeclasses","name='"+name+"'");
@@ -957,8 +959,9 @@ public class DBConnector {
 		    	break;
 		    case "tasks":
 		    	DBtask t = (DBtask) entity;
-		    	cmd += "(creator,name,description,visibility,text,answer) VALUES ";
-		    	cmd += "("+t.creator+",'"+t.name+"','"+t.description+"',"+Visibility.toInteger(t.visibility)+",'"+t.text+"','"+t.answer+"');";
+		    	cmd += "(creator,name,description,visibility,text,answer,authenticity) VALUES ";
+		    	cmd += "("+t.creator+",'"+t.name+"','"+t.description+"',"+Visibility.toInteger(t.visibility)+
+		    			",'"+t.text+"','"+t.answer+"',"+t.authenticity+");";
 		    	execute(cmd);
 		    	break;
 		    case "linkagetaskcompetence":
@@ -1345,15 +1348,15 @@ public class DBConnector {
 
 		
 		//create tasks for teacher1
-		DBtask task1 = new DBtask("task1","desc1","frage1","antw1",getUserId("teacher1"),Visibility.ALL);
+		DBtask task1 = new DBtask("task1","desc1","frage1","antw1",getUserId("teacher1"),Visibility.ALL,1.0);
 		addNewTask(task1);
-		DBtask task2 = new DBtask("task2","desc2","frage2","antw2",getUserId("teacher1"),Visibility.ALL);
+		DBtask task2 = new DBtask("task2","desc2","frage2","antw2",getUserId("teacher1"),Visibility.ALL,1.0);
 		addNewTask(task2);
-		DBtask task3 = new DBtask("task3","desc3","frage3","antw3",getUserId("teacher1"),Visibility.ALL);
+		DBtask task3 = new DBtask("task3","desc3","frage3","antw3",getUserId("teacher1"),Visibility.ALL,1.0);
 		addNewTask(task3);
-		DBtask task4 = new DBtask("task4","desc4","frage4","antw4",getUserId("teacher1"),Visibility.ALL);
+		DBtask task4 = new DBtask("task4","desc4","frage4","antw4",getUserId("teacher1"),Visibility.ALL,1.0);
 		addNewTask(task4);
-		DBtask task5 = new DBtask("task5","desc5","frage5","antw5",getUserId("teacher1"),Visibility.ALL);
+		DBtask task5 = new DBtask("task5","desc5","frage5","antw5",getUserId("teacher1"),Visibility.ALL,1.0);
 		addNewTask(task5);
 		
 		//link tasks and competences

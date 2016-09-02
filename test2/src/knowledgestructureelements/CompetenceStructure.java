@@ -124,8 +124,25 @@ public class CompetenceStructure {
 		return containsCircles;
 	}
 
-	public CompetenceState updateCompetenceState(CompetenceState currentCompetenecstate, Boolean success){
-		return null;
+	public void updateCompetenceState(Task task, CompetenceState currentCompetenecstate, Boolean success){
+		//update each core-competence included in the task
+		Double P = success ? 1.0 : 0.0;
+		Double A = task.authenticity;
+		Integer n;
+		Double dZ, dN, N, Z,T;
+		for(Competence competence : task.weights.keySet()){
+			//calculation:
+			T = task.weights.get(competence);
+			Z = currentCompetenecstate.numeratorvalues.get(competence);
+			N = currentCompetenecstate.denominatorvalues.get(competence);
+			n = currentCompetenecstate.nvalues.get(competence);
+			dZ=T*P*A*(((double)(n+1))/((double)n));
+			dN= T*A*(((double)(n+1))/((double)n));
+			//set values:
+			currentCompetenecstate.numeratorvalues.put(competence, Z+dZ);
+			currentCompetenecstate.denominatorvalues.put(competence, N+dN);
+			currentCompetenecstate.nvalues.put(competence, n+1);
+		}
 	}
 
 	//are all competences linked (5)

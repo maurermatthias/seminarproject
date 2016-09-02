@@ -55,4 +55,12 @@ public class TaskCollection {
 		}
 		return xml;
 	}
+
+	public Task getTaskById(int id){
+		for(Task task : tasks){
+			if(task.taskid == id)
+				return task;
+		}
+		return null;
+	}
 }

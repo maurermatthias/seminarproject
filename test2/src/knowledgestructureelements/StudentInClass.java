@@ -34,7 +34,8 @@ public class StudentInClass {
 	}
 	
 	public void updateCompetenceState(int taskId, Boolean success){
-		competenceState = clazz.competenceStructure.updateCompetenceState(competenceState, success);
+		Task task = clazz.taskCollection.getTaskById(taskId);
+		clazz.competenceStructure.updateCompetenceState(task, competenceState, success);
 	}
 	
 	public boolean isDataValid(){

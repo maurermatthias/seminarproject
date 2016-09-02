@@ -22,16 +22,19 @@ public class DBtask extends DBentity{
 	public String text;
 	@Element(name="answer")
 	public String answer;
+	@Element(name="authenticity")
+	public double authenticity;
 	
 	public DBtask(){}
 			
-	public DBtask(String name, String description, String text, String answer, int creator, Visibility visibility){
+	public DBtask(String name, String description, String text, String answer, int creator, Visibility visibility, double authenticity){
 		this.name = name;
 		this.description = description;
 		this.text = text;
 		this.answer = answer;
 		this.creator = creator;
 		this.visibility = visibility;
+		this.authenticity = authenticity;
 	}
 	
 	public String toXMLwithLinkage(){
@@ -40,6 +43,7 @@ public class DBtask extends DBentity{
 		xml+="<description>"+this.description+"</description>";
 		xml+="<text>"+this.text+"</text>";
 		xml+="<answer>"+this.answer+"</answer>";
+		xml +="<authenticity>"+this.authenticity+"</authenticity>";
 		
 		int taskId = DBConnector.getTaskIdByName(this.name);
 		List<DBentity> entities = DBConnector.getCompetenceLinksToTaskById(taskId);
@@ -68,6 +72,8 @@ public class DBtask extends DBentity{
 			this.answer = doc.getElementsByTagName("answer").item(0).getFirstChild().getNodeValue();
 		if(doc.getElementsByTagName("text").getLength()>0)
 			this.text = doc.getElementsByTagName("text").item(0).getFirstChild().getNodeValue();
+		if(doc.getElementsByTagName("authenticity").getLength()>0)
+			this.authenticity = Double.parseDouble(doc.getElementsByTagName("authenticity").item(0).getFirstChild().getNodeValue());
 	}
 	
 	

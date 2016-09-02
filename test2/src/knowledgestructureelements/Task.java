@@ -21,12 +21,14 @@ public class Task {
 	public String question;
 	public String answer;
 	public int taskid;
+	public double authenticity;
 	
 	public Task(int taskid, CompetenceStructure competenceStructure){
 		this.taskid = taskid;
 		DBtask dbtask = DBConnector.getTaskById(taskid);
 		question = dbtask.text;
 		answer = dbtask.answer;
+		authenticity = dbtask.authenticity;
 		
 		List<DBentity> entities = DBConnector.getCompetenceLinksToTaskById(taskid);
 		for(DBentity entity : entities){
@@ -39,7 +41,8 @@ public class Task {
 		this.question = task.getFirstChild().getFirstChild().getNodeValue();
 		this.answer = task.getFirstChild().getNextSibling().getFirstChild().getNodeValue();
 		this.taskid = Integer.parseInt(task.getFirstChild().getNextSibling().getNextSibling().getFirstChild().getNodeValue());
-		NodeList weightL = task.getFirstChild().getNextSibling().getNextSibling().getNextSibling().getChildNodes();
+		this.authenticity = Double.parseDouble(task.getFirstChild().getNextSibling().getNextSibling().getNextSibling().getFirstChild().getNodeValue());
+		NodeList weightL = task.getFirstChild().getNextSibling().getNextSibling().getNextSibling().getNextSibling().getChildNodes();
 		for(int j=0;j<weightL.getLength();j++){
 			String compName = weightL.item(j).getFirstChild().getFirstChild().getNodeValue();
 			String weight = weightL.item(j).getFirstChild().getNextSibling().getFirstChild().getNodeValue();
@@ -72,6 +75,7 @@ public class Task {
 		String xml = "<question>"+this.question+"</question>";
 		xml += "<answer>"+this.answer+"</answer>";
 		xml += "<taskid>"+this.taskid+"</taskid>";
+		xml += "<authenticity>"+this.authenticity+"</authenticity>";
 		xml+="<edges>";
 		Iterator<Entry<Competence, Double>> it = weights.entrySet().iterator();
 		while(it.hasNext()){
