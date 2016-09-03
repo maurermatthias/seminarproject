@@ -1,0 +1,12 @@
+package updateelements;
+
+import knowledgestructureelements.CompetenceState;
+import knowledgestructureelements.Task;
+
+public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
+
+	
+	public void updateCompetenceState(Task task, CompetenceState competencestate, boolean success){
+		
+	}
+}

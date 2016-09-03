@@ -1,0 +1,35 @@
+package updateelements;
+
+import org.jblas.DoubleMatrix;
+
+import knowledgestructureelements.Competence;
+import knowledgestructureelements.CompetenceState;
+import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Task;
+
+public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
+
+	@Override
+	public void updateCompetenceState(CompetenceStructure competenceStructure, Task task,
+			CompetenceState currentCompetenecstate, boolean success) {
+		if(competenceStructure.containsCircles())
+			return;
+		
+	}
+
+	@Override
+	public void setInitialCompetenceState(CompetenceStructure competenceStructure, CompetenceState competenceState) {
+		if(competenceStructure.containsCircles())
+			return;
+		
+	}
+
+	@Override
+	public int isDataValid() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	
+}

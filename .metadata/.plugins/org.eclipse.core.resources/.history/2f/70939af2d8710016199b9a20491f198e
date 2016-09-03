@@ -1,0 +1,5 @@
+package updateelements;
+
+public abstract class CompetenceUpdater {
+
+}

@@ -1,0 +1,353 @@
+package updateelements;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jblas.DoubleMatrix;
+
+import dbentities.DBcompetencevalue;
+import knowledgestructureelements.Competence;
+import knowledgestructureelements.CompetenceState;
+import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Edge;
+import knowledgestructureelements.Task;
+import test2.DBConnector;
+
+public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
+
+	@Override
+	public void updateCompetenceState(CompetenceStructure competenceStructure,Task task, 
+			CompetenceState currentCompetenecstate, boolean success){
+		//update each core-competence included in the task
+		Double P = success ? 1.0 : 0.0;
+		Double A = task.authenticity;
+		Integer n;
+		Double dZ, dN, N, Z,T;
+		for(Competence competence : task.weights.keySet()){
+			//calculation:
+			T = task.weights.get(competence);
+			Z = currentCompetenecstate.numeratorvalues.get(competence);
+			N = currentCompetenecstate.denominatorvalues.get(competence);
+			n = currentCompetenecstate.nvalues.get(competence);
+			dZ=T*P*A*(((double)(n+1))/((double)n));
+			dN= T*A*(((double)(n+1))/((double)n));
+			//set values:
+			currentCompetenecstate.numeratorvalues.put(competence, Z+dZ);
+			currentCompetenecstate.denominatorvalues.put(competence, N+dN);
+			currentCompetenecstate.nvalues.put(competence, n+1);
+		}
+		
+		//update competence-values
+		DoubleMatrix competenceValues = competenceStructure.getCompetenceValuesFromCoreCompetenceValues(currentCompetenecstate);
+		for(int i=0;i<competenceStructure.competences.size();i++){
+			currentCompetenecstate.competencevalues.put(competenceStructure.competences.get(i), competenceValues.get(0,i));
+		}
+	}
+
+	@Override
+	public void setInitialCompetenceState(CompetenceState competenceState) {
+		//create initial competence state -> watch out when having circles!
+		for(Competence competence : competenceState.compStr.competences){
+			Double value = 0.5;
+			Double numerator = 1.0;
+			Double denominator = 2.0;
+			Integer n = 1;
+			competenceState.competencevalues.put(competence,value);
+			competenceState.denominatorvalues.put(competence,denominator);
+			competenceState.numeratorvalues.put(competence,numerator);
+			competenceState.nvalues.put(competence,n);
+			DBConnector.addNewCompetenceValue(new DBcompetencevalue(competenceState.studentId, competenceState.classId,
+					DBConnector.getCompetenceIdByName(competence.name),value,denominator,numerator,n));
+		}
+	}
+
+	public DoubleMatrix getCompetenceValuesFromCoreCompetenceValues(List<Competence> competences, CompetenceState currentCompetenecstate){
+		//calculate core competence values
+		DoubleMatrix coreCompetenceVector = getCoreCompetenceValues(competences, currentCompetenecstate);
+		DoubleMatrix rcam = this.getResolvedCompetenceAdjacencyMatrix();
+		DoubleMatrix competenceValues = coreCompetenceVector.mmul(rcam);
+		return competenceValues;
+	}
+	
+	public DoubleMatrix getCoreCompetenceValues(List<Competence> competences, CompetenceState currentCompetenecstate){
+		DoubleMatrix coreCompetenceVector = new DoubleMatrix(1,competences.size());
+		Double Z;
+		Double N;
+		for(int i=0;i<competences.size();i++){
+			Z=currentCompetenecstate.numeratorvalues.get(competences.get(i));
+			N=currentCompetenecstate.denominatorvalues.get(competences.get(i));
+			coreCompetenceVector.put(0, i,(double) (Z/N));
+		}
+		return coreCompetenceVector;
+	}
+
+
+
+	public DoubleMatrix getCompetenceAdjacencyMatrix(){
+		DoubleMatrix cam = new DoubleMatrix(competences.size(),competences.size());
+		Edge edge;
+		Competence competence;
+		for(int i=0;i<competences.size();i++){
+			competence = competences.get(i);
+			//by line -> successors
+			for(int j=0;j<competences.size();j++){
+				edge = competence.getSuccessorEdgeByCompetenceName(competences.get(j).name);
+				if(edge==null)
+					cam.put(i, j, 0.0);
+				else{
+					cam.put(i, j, edge.weight);
+				}
+			}
+		}
+		return cam;
+	}
+	
+	public DoubleMatrix getResolvedCompetenceAdjacencyMatrix(){
+		DoubleMatrix rcam = new DoubleMatrix(competences.size(),competences.size());
+		DoubleMatrix cam = getCompetenceAdjacencyMatrix();
+		DoubleMatrix ccwv = getCoreCompetenceWeightVector();
+		if(containsCircles()){
+			//circle START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			//1) calculate circle lengths
+			List<Integer> circleLengths = new ArrayList<Integer>();
+			DoubleMatrix Wk = DoubleMatrix.eye(competences.size());
+			for(int i =1;i<=competences.size();i++){
+				Wk=Wk.mmul(cam);
+				if(this.getDiagonalSum(Wk)>0)
+					circleLengths.add(i);
+			}
+			//3) calculate GCD of all circlelength
+			int LCM = getLCM(circleLengths);
+			//4) sum up Wk and without diag, and diag in vector
+			Wk = DoubleMatrix.eye(competences.size());
+			//DoubleMatrix Sk = DoubleMatrix.zeros(competences.size(),competences.size());
+			DoubleMatrix Sk = DoubleMatrix.eye(competences.size());
+			DoubleMatrix v = DoubleMatrix.zeros(1, competences.size());
+			DoubleMatrix wLCM = DoubleMatrix.zeros(1, competences.size());
+			for(int i =1;i<=50*LCM;i++){
+				Wk=Wk.mmul(cam);
+				Sk = Sk.add(Wk/*.sub(DoubleMatrix.diag(this.getDiagVec(Wk)))*/);
+				/*
+				if(i<LCM)
+					v = v.add(this.getDiagVec(Wk));
+				else
+					wLCM= this.getDiagVec(Wk);
+				*/
+			}
+			wLCM= this.getDiagVec(Wk);
+			DoubleMatrix D = elementwiseInverse(DoubleMatrix.ones(competences.size(), 
+					competences.size()).sub(this.createMatrixFromRow(wLCM)));
+			DoubleMatrix WM  = this.createMatrixFromColumn(ccwv);
+			DoubleMatrix dv = elementwiseInverse(DoubleMatrix.ones(1,competences.size()).sub(wLCM));
+			DoubleMatrix res = 	DoubleMatrix.diag(ccwv).mmul(Sk/*.add(DoubleMatrix.eye(competences.size())).add(DoubleMatrix.diag(v))*/).mmul(DoubleMatrix.diag(dv));
+			rcam = res;
+			//System.out.println(this.getVectorString(v, competences));
+			//circles END++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		}else{
+			DoubleMatrix ccwvMatrix = DoubleMatrix.diag(ccwv);
+			DoubleMatrix sumOfMatrixProducts = sumOfPotentiatedMatrices(cam,competences.size());
+			rcam = ccwvMatrix.mmul(sumOfMatrixProducts);
+		}
+		return rcam;
+	}
+	
+	public DoubleMatrix getCoreCompetenceWeightVector(){
+		DoubleMatrix ccwv = new DoubleMatrix(1,competences.size());
+		Competence competence;
+		BigDecimal sum;
+		for(int i=0;i<competences.size();i++){
+			competence = competences.get(i);
+			sum=BigDecimal.valueOf(0.0);
+			for(Edge edge : competence.prerequisites){
+				sum=sum.add(BigDecimal.valueOf(edge.weight));
+			}
+			ccwv.put(0,i, BigDecimal.valueOf(1.0).subtract(sum).doubleValue());
+		}
+		return ccwv;
+	}
+	
+	public String getMatrixString(DoubleMatrix matrix,List<Competence> competences){
+		int namelength = 5;
+		
+		List<String> competenceNames = new ArrayList<String>();
+		for(int i=0;i<competences.size();i++){
+			String name = "";
+			if(competences.get(i).name.length()<=namelength){
+				name = competences.get(i).name;
+				while(name.length()<namelength)
+					name += " ";
+			}else{
+				name = competences.get(i).name.substring(0, namelength);
+			}
+			competenceNames.add(name);
+		}
+		//first line
+		String seperation = "|";
+		String txt = getSpaces(namelength)+seperation;
+		for(int i=0;i<competenceNames.size();i++)
+			txt+=competenceNames.get(i)+seperation;
+		txt+="\n";
+		BigDecimal[] sum = new BigDecimal[competenceNames.size()];
+		for(int i =0;i<competenceNames.size();i++)
+			sum[i] = BigDecimal.valueOf(0.0);
+		for(int i =0;i<competenceNames.size();i++){
+			String line = competenceNames.get(i)+seperation;
+			for(int j =0;j<competenceNames.size();j++){
+				double div = 1;
+				for(int k=2;k<namelength;k++)
+					div=div*10;
+				double nr = Math.round(div*matrix.get(i, j))/div;
+				sum[j]=sum[j].add(BigDecimal.valueOf(nr));
+				line+=extendToLength(Double.toString(nr),namelength)+seperation;
+			}
+			line += "\n";
+			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
+			txt+=line;
+		}
+		//sum line
+		txt += getSpaces(namelength)+seperation;
+		for(int i =0;i<competenceNames.size();i++)
+			txt+=extendToLength(Double.toString(sum[i].doubleValue()),namelength)+seperation;
+		return txt;
+	}
+
+	public String getVectorString(DoubleMatrix matrix,List<Competence> competences){
+		int namelength = 4;
+		
+		List<String> competenceNames = new ArrayList<String>();
+		for(int i=0;i<competences.size();i++){
+			String name = "";
+			if(competences.get(i).name.length()<=namelength){
+				name = competences.get(i).name;
+				while(name.length()<namelength)
+					name += " ";
+			}else{
+				name = competences.get(i).name.substring(0, namelength);
+			}
+			competenceNames.add(name);
+		}
+		//first line
+		String seperation = "|";
+		String txt = "";
+		for(int i =0;i<competenceNames.size();i++){
+			String line = competenceNames.get(i)+seperation;
+			line += extendToLength(Double.toString(matrix.get(0, i)),4)+"\n";
+			//line += multiplyString("-",(namelength+1)*(competenceNames.size()+1))+"\n";
+			txt+=line;
+		}
+		return txt;
+	}
+	
+	private String getSpaces(int length){
+		return extendToLength("",length);
+	}
+	
+	private String extendToLength(String text, int length){
+		while(text.length()<length)
+			text += " ";
+		return text;
+	}
+	
+	private DoubleMatrix potentiateMatrix(DoubleMatrix matrix, int i){
+		if(i==0)
+			return DoubleMatrix.eye(matrix.columns);
+		if(i==1)
+			return matrix;
+		DoubleMatrix result = matrix;
+		for(int j=2;j<=i;j++)
+			result = result.mmul(matrix);
+		return result;
+	}
+	
+	private DoubleMatrix sumOfPotentiatedMatrices(DoubleMatrix matrix, int times){
+		DoubleMatrix retMatrix = potentiateMatrix(matrix,0);
+		for(int i=1;i<=times;i++)
+			retMatrix = retMatrix.add(potentiateMatrix(matrix,i));
+		return retMatrix;
+	}
+	
+	private Double getDiagonalSum(DoubleMatrix matrix){
+		double sum = 0.0;
+		for(int i=0;i<matrix.columns;i++)
+			sum+=matrix.get(i, i);
+		return sum;
+	}
+
+	private Integer getLCM(List<Integer> list){
+		long[] listlong = new long[list.size()];
+		for(int i=0;i<list.size();i++)
+			listlong[i]= (long) list.get(i);
+		return (int) lcm(listlong);
+		
+	}
+	
+	private static long gcd(long a, long b)
+	{
+	    while (b > 0)
+	    {
+	        long temp = b;
+	        b = a % b; // % is remainder
+	        a = temp;
+	    }
+	    return a;
+	}
+
+	private static long lcm(long a, long b)
+	{
+	    return a * (b / gcd(a, b));
+	}
+
+	private static long lcm(long[] input)
+	{
+	    long result = input[0];
+	    for(int i = 1; i < input.length; i++) result = lcm(result, input[i]);
+	    return result;
+	}
+
+	private DoubleMatrix substractDiag(DoubleMatrix matrix){
+		for(int i=0;i<matrix.columns;i++)
+			matrix.put(i,i,0.0);
+		return matrix;
+	}
+	
+	private DoubleMatrix getDiagVec(DoubleMatrix matrix){
+		DoubleMatrix vector = new DoubleMatrix(1,matrix.columns);
+		for(int i=0;i<matrix.columns;i++)
+			vector.put(0, i,matrix.get(i, i));
+		return vector;
+	}
+
+	private DoubleMatrix createMatrixFromColumn(DoubleMatrix vector){
+		DoubleMatrix matrix = new DoubleMatrix(vector.columns,vector.columns);
+		for(int i=0;i<vector.columns;i++){
+			for(int j=0; j<vector.columns;j++){
+				matrix.put(i,j, vector.get(0,i));
+			}
+		}
+		return matrix;
+	}
+
+	private DoubleMatrix createMatrixFromRow(DoubleMatrix vector){
+		DoubleMatrix matrix = new DoubleMatrix(vector.columns,vector.columns);
+		for(int i=0;i<vector.columns;i++){
+			for(int j=0; j<vector.columns;j++){
+				matrix.put(i,j, vector.get(0,j));
+			}
+		}
+		return matrix;
+	}
+
+	private DoubleMatrix elementwiseInverse(DoubleMatrix matrixIn){
+		DoubleMatrix matrixOut = new DoubleMatrix(matrixIn.rows,matrixIn.columns);
+		for(int i=0;i<matrixIn.rows;i++){
+			for(int j=0;j<matrixIn.columns;j++){
+				matrixOut.put(i,j, 1/matrixIn.get(i,j));
+			}
+		}
+		return matrixOut;
+	}
+
+
+
+}

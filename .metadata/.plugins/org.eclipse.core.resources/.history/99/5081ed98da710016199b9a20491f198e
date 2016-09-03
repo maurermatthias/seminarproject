@@ -1,0 +1,59 @@
+package updateelements;
+
+import org.jblas.DoubleMatrix;
+
+import dbentities.DBcompetencevalue;
+import knowledgestructureelements.Competence;
+import knowledgestructureelements.CompetenceState;
+import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Task;
+import test2.DBConnector;
+
+public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
+
+	@Override
+	public void updateCompetenceState(CompetenceStructure competenceStructure,Task task, 
+			CompetenceState currentCompetenecstate, boolean success){
+		//update each core-competence included in the task
+		Double P = success ? 1.0 : 0.0;
+		Double A = task.authenticity;
+		Integer n;
+		Double dZ, dN, N, Z,T;
+		for(Competence competence : task.weights.keySet()){
+			//calculation:
+			T = task.weights.get(competence);
+			Z = currentCompetenecstate.numeratorvalues.get(competence);
+			N = currentCompetenecstate.denominatorvalues.get(competence);
+			n = currentCompetenecstate.nvalues.get(competence);
+			dZ=T*P*A*(((double)(n+1))/((double)n));
+			dN= T*A*(((double)(n+1))/((double)n));
+			//set values:
+			currentCompetenecstate.numeratorvalues.put(competence, Z+dZ);
+			currentCompetenecstate.denominatorvalues.put(competence, N+dN);
+			currentCompetenecstate.nvalues.put(competence, n+1);
+		}
+		
+		//update competence-values
+		DoubleMatrix competenceValues = competenceStructure.getCompetenceValuesFromCoreCompetenceValues(currentCompetenecstate);
+		for(int i=0;i<competenceStructure.competences.size();i++){
+			currentCompetenecstate.competencevalues.put(competenceStructure.competences.get(i), competenceValues.get(0,i));
+		}
+	}
+
+	@Override
+	public void setInitialCompetenceState(CompetenceState competenceState) {
+		//create initial competence state -> watch out when having circles!
+		for(Competence competence : compStr.competences){
+			Double value = 0.5;
+			Double numerator = 1.0;
+			Double denominator = 2.0;
+			Integer n = 1;
+			competenceState.competencevalues.put(competence,value);
+			competenceState.denominatorvalues.put(competence,denominator);
+			competenceState.numeratorvalues.put(competence,numerator);
+			competenceState.nvalues.put(competence,n);
+			DBConnector.addNewCompetenceValue(new DBcompetencevalue(competenceState.studentId, competenceState.classId,
+					DBConnector.getCompetenceIdByName(competence.name),value,denominator,numerator,n));
+		}
+	}
+}

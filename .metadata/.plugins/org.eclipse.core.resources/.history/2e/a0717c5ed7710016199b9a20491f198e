@@ -1,0 +1,5 @@
+package knowledgestructureelements;
+
+public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
+
+}

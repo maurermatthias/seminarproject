@@ -1,0 +1,5 @@
+package updateelements;
+
+public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
+
+}
