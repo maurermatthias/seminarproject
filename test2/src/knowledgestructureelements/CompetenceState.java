@@ -52,8 +52,15 @@ public class CompetenceState {
 			
 	}
 	
+	public double getValueByName(String name){
+		for(Competence competence : competencevalues.keySet()){
+			if(competence.name.equals(name))
+				return competencevalues.get(competence);
+		}
+		return -1.0;
+	}
 	
-	public void store(){
+ 	public void store(){
 		for(Competence competence : compStr.competences){
 			Double value = competencevalues.get(competence);
 			Double denominator = denominatorvalues.get(competence);

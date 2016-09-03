@@ -11,6 +11,9 @@ import knowledgestructureelements.CompetenceStructure;
 import knowledgestructureelements.Task;
 
 public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
+	public double xi0=1.5;
+	public double xi1=1.5;
+	public double epsilon = 0.0000001;
 
 	@Override
 	public void updateCompetenceState(CompetenceStructure competenceStructure, Task task,
@@ -18,6 +21,72 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 		if(competenceStructure.containsCircles())
 			return;
 		
+		//create structure to sum up calculated competence states
+		Map<Competence,Double> values = new HashMap<Competence,Double>(); 
+		for(Competence competence : competenceStructure.competences){
+			values.put(competence, 0.0);
+		}
+		
+		//update each competence for its own
+		for(Competence competence : task.weights.keySet()){
+			Map<Competence,Double> updateValues = updateOneCompetence(competenceStructure,currentCompetenecstate,competence,success);
+			for(Competence com : competenceStructure.competences){
+				values.put(com, values.get(com)+updateValues.get(com));
+			}
+		}
+		
+		//calculate the mean and store in the competence state
+		for(Competence com : competenceStructure.competences){
+			currentCompetenecstate.competencevalues.put(com, values.get(com)/((double) competenceStructure.competences.size()));
+		}
+	}
+	
+	private Map<Competence,Double> updateOneCompetence(CompetenceStructure competenceStructure,CompetenceState cs,
+			Competence competence,boolean success){
+		
+		Map<Competence,Double> values = new HashMap<Competence,Double>();
+		
+		Double N = success ? xi0*cs.getValueByName(competence.name)+(1.0-cs.getValueByName(competence.name)) : 
+			cs.getValueByName(competence.name)+xi1*(1.0-cs.getValueByName(competence.name));
+		
+		for(Competence com : competenceStructure.competences){
+			if(competence.isSmallerOrEqual(com) && !competence.name.equals(com.name)){
+				if(success){
+					values.put(com, (xi0*cs.getValueByName(com.name))/N);
+				}else{
+					values.put(com, (cs.getValueByName(com.name))/N);
+				}
+			}else if(com.isSmallerOrEqual(competence)){
+				if(success){
+					values.put(com, (xi0*cs.getValueByName(competence.name)+(cs.getValueByName(com.name)-cs.getValueByName(competence.name)))/N);
+				}else{
+					values.put(com, (cs.getValueByName(competence.name)+xi1*(cs.getValueByName(com.name)-cs.getValueByName(competence.name)))/N);
+				}
+			}else{
+				values.put(com, cs.getValueByName(com.name));
+			}
+		}
+		
+		//consistency check
+		boolean changes = true;
+		while(changes){
+			for(Competence c1 : competenceStructure.competences){
+				for(Competence c2 : competenceStructure.competences){
+					if(c1.name.equals(c2.name))
+						break;
+					if(c1.isSmallerOrEqual(c2)  && values.get(c1) <= values.get(c2)){
+						if(success){
+							values.put(c1,Math.min(1.0-epsilon, values.get(c2)-epsilon));
+						}else{
+							values.put(c2,Math.max(epsilon, values.get(c1)-epsilon));
+						}
+						changes=true;
+					}
+				}
+			}
+		}
+		
+		return values;
 	}
 
 	@Override
