@@ -67,6 +67,23 @@ public class Competence {
 		return successors.remove(com);
 	}
 
+	public boolean isSmallerOrEqual(Competence competence){
+		List<Competence> indirectSuccessors = new ArrayList<Competence>();
+		for(Edge edge : successors)
+			indirectSuccessors.add(edge.to);
+		Competence com;
+		while(indirectSuccessors.size()>0){
+			com = indirectSuccessors.remove(0);
+			if(com.name.equals(competence.name))
+				return true;
+			else{
+				for(Edge edge : com.successors)
+					indirectSuccessors.add(edge.to);
+			}
+		}
+		return false;
+	}
+	
 	public String getDiagnosticString(){
 		String str = "Competence '"+name+"':\n";
 		str+="Prerequisites:\n";

@@ -1186,8 +1186,9 @@ public class DBConnector {
 		return true;
 	}
 	public static boolean updateCompetenceValue(DBcompetencevalue cvalue){
-		return update("competencevalues","value="+cvalue.value,"studentid="+cvalue.studentid+
-				" AND classid="+cvalue.classid+" AND competenceid="+cvalue.competenceid);
+		return update("competencevalues","value="+cvalue.value+", n="+cvalue.n+", denominator="+cvalue.denominator+
+				", numerator="+cvalue.numerator,
+				"studentid="+cvalue.studentid+" AND classid="+cvalue.classid+" AND competenceid="+cvalue.competenceid);
 	}
 	public static boolean updateLinkageClassCstructure(DBlinkageclasscstructure entity){
 		return update("linkageclasscstructure","cstructureid="+entity.cstructureid,
@@ -1342,10 +1343,10 @@ public class DBConnector {
 		addNewCompetenceWeight(wei4);
 
 		
-		///*    ADD CIRCLES
+		/*    ADD CIRCLES
 		DBcompetenceweight wei5 = new DBcompetenceweight(getCstructureIdByName("CS1"),getCompetenceIdByName("C5"),getCompetenceIdByName("C2"),0.5);
 		addNewCompetenceWeight(wei5);
-
+		//*/
 		
 		//create tasks for teacher1
 		DBtask task1 = new DBtask("task1","desc1","frage1","antw1",getUserId("teacher1"),Visibility.ALL,1.0);

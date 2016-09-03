@@ -6,34 +6,35 @@ import java.util.Map;
 
 import dbentities.DBcompetencevalue;
 import test2.DBConnector;
+import updateelements.CompetenceUpdater;
 
 public class CompetenceState {
-	HashMap<Competence, Double> competencevalues = new HashMap<Competence, Double>();
-	HashMap<Competence, Double> denominatorvalues = new HashMap<Competence, Double>();
-	HashMap<Competence, Double> numeratorvalues = new HashMap<Competence, Double>();
-	HashMap<Competence, Integer> nvalues = new HashMap<Competence, Integer>();
+	public HashMap<Competence, Double> competencevalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Double> denominatorvalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Double> numeratorvalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Integer> nvalues = new HashMap<Competence, Integer>();
 	public int cstructureId;
 	public int studentId;
 	public int classId;
 	public CompetenceStructure compStr;
 	
-	public CompetenceState(int  userId, int classId){
+	public CompetenceState(int  userId, int classId,CompetenceUpdater updater){
 		this.studentId = userId;
 		this.classId = classId;
 		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
 		compStr = DBConnector.getCompetenceStructure(cstructureId);
-		loadCompetenceState();
+		loadCompetenceState(updater);
 	}
 	
-	public CompetenceState(int  userId, Clazz clazz){
+	public CompetenceState(int  userId, Clazz clazz,CompetenceUpdater updater){
 		this.studentId = userId;
 		this.classId = clazz.classId;
 		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
 		compStr = clazz.competenceStructure;
-		loadCompetenceState();
+		loadCompetenceState(updater);
 	}
 	
-	private void loadCompetenceState(){
+	private void loadCompetenceState(CompetenceUpdater updater){
 		Boolean initialiseCompetenceState = false;
 		for(Competence competence : compStr.competences){
 			DBcompetencevalue cv = DBConnector.getCompetenceValueEntry(studentId, classId, DBConnector.getCompetenceIdByName(competence.name));
@@ -47,25 +48,10 @@ public class CompetenceState {
 			nvalues.put(competence,cv.n);
 		}
 		if(initialiseCompetenceState)
-			setInitialCompetenceState();
+			updater.setInitialCompetenceState(compStr, this);
 			
 	}
 	
-	private void setInitialCompetenceState(){
-		//create initial competence state -> watch out when having circles!
-		for(Competence competence : compStr.competences){
-			Double value = 0.5;
-			Double numerator = 1.0;
-			Double denominator = 2.0;
-			Integer n = 1;
-			competencevalues.put(competence,value);
-			denominatorvalues.put(competence,denominator);
-			numeratorvalues.put(competence,numerator);
-			nvalues.put(competence,n);
-			DBConnector.addNewCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name), 
-					value,denominator,numerator,n));
-		}
-	}
 	
 	public void store(){
 		for(Competence competence : compStr.competences){
@@ -92,8 +78,11 @@ public class CompetenceState {
 	
 	public String getDiagnosticString(){
 		String str = "Competence state:\n";
+		Double n = 100.0;
 		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
-		    str+="    -"+entry.getKey().name +"("+entry.getValue().doubleValue()+")\n";
+			Competence key = entry.getKey();
+		    str+="    -"+key.name +"(V:"+Math.round(entry.getValue().doubleValue()*n)/n+",Z:"+Math.round(numeratorvalues.get(key)*n)/n+
+		    		",N:"+Math.round(denominatorvalues.get(key)*n)/n+",n:"+nvalues.get(key)+")\n";
 		}
 		return str;
 	}
