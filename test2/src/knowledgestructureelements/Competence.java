@@ -68,6 +68,8 @@ public class Competence {
 	}
 
 	public boolean isSmallerOrEqual(Competence competence){
+		if(this.name.equals(competence.name))
+			return true;
 		List<Competence> indirectSuccessors = new ArrayList<Competence>();
 		for(Edge edge : successors)
 			indirectSuccessors.add(edge.to);

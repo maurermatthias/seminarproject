@@ -1,5 +1,6 @@
 package knowledgestructureelements;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,5 +93,28 @@ public class CompetenceState {
 		    		",N:"+Math.round(denominatorvalues.get(key)*n)/n+",n:"+nvalues.get(key)+")\n";
 		}
 		return str;
+	}
+
+	public List<Competence> getOuterFringe(double probabilityLimit){
+		List<Competence> outerFringe = new ArrayList<Competence>();
+		List<Competence> possessedCompetences = new ArrayList<Competence>();
+		
+		for(Competence competence : competencevalues.keySet()){
+			if(competencevalues.get(competence)>= probabilityLimit)
+				possessedCompetences.add(competence);
+		}
+		
+		for(Competence possibleFringeCandidate : competencevalues.keySet()){
+			if(possessedCompetences.contains(possibleFringeCandidate) || outerFringe.contains(possibleFringeCandidate))
+				continue;
+			for(Edge edgeBack : possibleFringeCandidate.prerequisites){
+				if(!possessedCompetences.contains(edgeBack.from)){
+					continue;
+				}
+			}
+			outerFringe.add(possibleFringeCandidate);
+		}
+		
+		return(outerFringe);
 	}
 }

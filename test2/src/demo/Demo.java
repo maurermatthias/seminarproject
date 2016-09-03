@@ -55,8 +55,8 @@ public class Demo{
         //System.out.println(cs.getMatrixString(cs.getResolvedCompetenceAdjacencyMatrix(), cs.competences));
         
         System.out.println(sic.competenceState.getDiagnosticString());
-        //sic.updateCompetenceState(2, true);
-        //System.out.println(sic.competenceState.getDiagnosticString());
+        sic.updateCompetenceState(2, true);
+        System.out.println(sic.competenceState.getDiagnosticString());
 
         System.out.println("END");
     }

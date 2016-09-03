@@ -28,14 +28,7 @@ public class StudentInClass {
 
 	//@return null -> no further task useful
 	public Task getNextTask(){
-		if(clazz.taskCollection.tasks.size()>0){
-			Random rand = new Random();
-			int randomNum = rand.nextInt(clazz.taskCollection.tasks.size());
-			Task task = clazz.taskCollection.tasks.get(randomNum);
-			return task;
-		}else{
-			return null;
-		}
+		return updater.getNextTask(competenceState, clazz);
 	}
 	
 	public void updateCompetenceState(int taskId, Boolean success){

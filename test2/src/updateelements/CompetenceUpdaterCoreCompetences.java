@@ -3,10 +3,12 @@ package updateelements;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.jblas.DoubleMatrix;
 
 import dbentities.DBcompetencevalue;
+import knowledgestructureelements.Clazz;
 import knowledgestructureelements.Competence;
 import knowledgestructureelements.CompetenceState;
 import knowledgestructureelements.CompetenceStructure;
@@ -79,6 +81,18 @@ public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
 	@Override
 	public int isDataValid(){
 		return 0;
+	}
+	
+	@Override
+	public Task getNextTask(CompetenceState competenceState,Clazz clazz) {
+		if(clazz.taskCollection.tasks.size()>0){
+			Random rand = new Random();
+			int randomNum = rand.nextInt(clazz.taskCollection.tasks.size());
+			Task task = clazz.taskCollection.tasks.get(randomNum);
+			return task;
+		}else{
+			return null;
+		}
 	}
 	
 	public DoubleMatrix getCompetenceValuesFromCoreCompetenceValues(CompetenceStructure competenceStructure, CompetenceState currentCompetenecstate){
