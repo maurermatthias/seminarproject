@@ -1,0 +1,5 @@
+package updateelements;
+
+public enum UpdateProcedure {
+	SUR,CCU;
+}
