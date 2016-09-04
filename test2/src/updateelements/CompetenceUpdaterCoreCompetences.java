@@ -2,10 +2,13 @@ package updateelements;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.jblas.DoubleMatrix;
+import org.jblas.Solve;
 
 import dbentities.DBcompetencevalue;
 import knowledgestructureelements.Clazz;
@@ -17,23 +20,41 @@ import knowledgestructureelements.Task;
 import test2.DBConnector;
 
 public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
-
+	public double exp = 1.0;
+	//competence possessed >= probabilityLimit
+	public double probabilityLimit = 0.8;
+	private DoubleMatrix rcam = null;
+	
+	public CompetenceUpdaterCoreCompetences(){
+		this.isCCU=true;
+		this.isSUR=false;
+	}
+	
 	@Override
 	public void updateCompetenceState(CompetenceStructure competenceStructure,Task task, 
 			CompetenceState currentCompetenecstate, boolean success){
+		//translate competence shares in core-competence shares //cc=c*R^T
+		DoubleMatrix rcam = getResolvedCompetenceAdjacencyMatrix(competenceStructure);
+		DoubleMatrix ccshares = task.getCompetenceVector(competenceStructure.competences).mmul(rcam.transpose());
+		//System.out.println(this.getVectorString(task.getCompetenceVector(competenceStructure.competences), competenceStructure.competences));
+		//System.out.println(this.getVectorString(ccshares, competenceStructure.competences));
 		//update each core-competence included in the task
 		Double P = success ? 1.0 : 0.0;
 		Double A = task.authenticity;
 		Integer n;
 		Double dZ, dN, N, Z,T;
-		for(Competence competence : task.weights.keySet()){
+		Competence competence;
+		for(int i=0; i<competenceStructure.competences.size();i++){
+			if(ccshares.get(0,i)==0.0)
+				continue;
 			//calculation:
-			T = task.weights.get(competence);
+			competence = competenceStructure.competences.get(i);
+			T = ccshares.get(0,i);
 			Z = currentCompetenecstate.numeratorvalues.get(competence);
 			N = currentCompetenecstate.denominatorvalues.get(competence);
 			n = currentCompetenecstate.nvalues.get(competence);
-			dZ=T*P*A*(((double)(n+1))/((double)n));
-			dN= T*A*(((double)(n+1))/((double)n));
+			dZ=T*P*A*Math.pow((((double)(n+1))/((double)n)),exp);
+			dN= T*A*Math.pow((((double)(n+1))/((double)n)),exp);
 			//set values:
 			currentCompetenecstate.numeratorvalues.put(competence, Z+dZ);
 			currentCompetenecstate.denominatorvalues.put(competence, N+dN);
@@ -78,21 +99,80 @@ public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
 		}
 	}
 
+	//1, if data is fine
+	//%3==0, if competence weight sum for one competence is > 1
+	//%5==0, if competence has neither prerequisites nor successors
 	@Override
-	public int isDataValid(){
-		return 0;
+	public int isDataValid(Clazz clazz){
+		int retVal = 1;
+		
+		for(Competence competence : clazz.competenceStructure.competences){
+			Double weight = 0.0;
+			for(Edge edge : competence.prerequisites){
+				weight += edge.weight;
+			}
+			if(weight>1){
+				retVal = retVal *3; 
+			}
+			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
+				retVal = retVal *5;
+			}
+		}
+		
+		return retVal;
 	}
 	
 	@Override
 	public Task getNextTask(CompetenceState competenceState,Clazz clazz) {
-		if(clazz.taskCollection.tasks.size()>0){
-			Random rand = new Random();
-			int randomNum = rand.nextInt(clazz.taskCollection.tasks.size());
-			Task task = clazz.taskCollection.tasks.get(randomNum);
-			return task;
-		}else{
-			return null;
+		List<Competence> outerFringe = competenceState.getOuterFringe(probabilityLimit);
+		Map<Task,List<Competence>> missingCompetences = new HashMap<Task,List<Competence>>();
+		for(Task task : clazz.taskCollection.tasks){
+			missingCompetences.put(task, new ArrayList<Competence>());
+			for(Competence competence : task.weights.keySet()){
+				if(competenceState.getValueByName(competence.name) < probabilityLimit){
+					missingCompetences.get(task).add(competence);
+				}
+			}
 		}
+		Map<Task,int[]> missingCompNr = new HashMap<Task,int[]>();
+		int missingCompetencesInFringe;
+		int missingCompetencesNotInFringe;
+		for(Task task : missingCompetences.keySet()){
+			missingCompetencesInFringe=0;
+			missingCompetencesNotInFringe=0;
+			for(Competence competence : missingCompetences.get(task)){
+				if(outerFringe.contains(competence))
+					missingCompetencesInFringe++;
+				else
+					missingCompetencesNotInFringe++;
+			}
+			int[] missingNr = {missingCompetencesInFringe,missingCompetencesNotInFringe};
+			missingCompNr.put(task, missingNr);
+		}
+		
+		//search for suitable task
+		List<Task> choosenTasks = new ArrayList<Task>();
+		int allowedCompetencesInFringe = 1;
+		int allowedCompetencesNotInFringe =0;
+		while(choosenTasks.size()==0){
+			for(Task task : missingCompNr.keySet()){
+				if(missingCompNr.get(task)[0]==allowedCompetencesInFringe && missingCompNr.get(task)[1]==allowedCompetencesNotInFringe){
+					choosenTasks.add(task);
+				}
+				allowedCompetencesInFringe++;
+				if(allowedCompetencesInFringe > competenceState.competencevalues.keySet().size()){
+					allowedCompetencesInFringe=0;
+					allowedCompetencesNotInFringe++;
+					if(allowedCompetencesNotInFringe > competenceState.competencevalues.keySet().size()){
+						return null;
+					}
+				}
+			}
+		}
+		
+		Random rand = new Random();
+		int randomNum = rand.nextInt(choosenTasks.size());
+		return choosenTasks.get(randomNum);
 	}
 	
 	public DoubleMatrix getCompetenceValuesFromCoreCompetenceValues(CompetenceStructure competenceStructure, CompetenceState currentCompetenecstate){
@@ -135,8 +215,10 @@ public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
 	}
 	
 	public DoubleMatrix getResolvedCompetenceAdjacencyMatrix(CompetenceStructure competenceStructure){
+		if(rcam != null)
+			return rcam;
 		List<Competence> competences = competenceStructure.competences;
-		DoubleMatrix rcam = new DoubleMatrix(competences.size(),competences.size());
+		rcam = new DoubleMatrix(competences.size(),competences.size());
 		DoubleMatrix cam = getCompetenceAdjacencyMatrix(competences);
 		DoubleMatrix ccwv = getCoreCompetenceWeightVector(competences);
 		if(competenceStructure.containsCircles()){
@@ -374,4 +456,8 @@ public class CompetenceUpdaterCoreCompetences extends CompetenceUpdater {
 		return matrixOut;
 	}
 
+	private DoubleMatrix getInverse(DoubleMatrix matrix){
+		return Solve.solve(matrix, DoubleMatrix.eye(matrix.rows));
+	}
+	
 }

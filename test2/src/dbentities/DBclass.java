@@ -8,11 +8,15 @@ import org.w3c.dom.Document;
 
 import knowledgestructureelements.Clazz;
 import test2.DBConnector;
+import updateelements.UpdateProcedure;
 
 @Root(name="class")
 public class DBclass extends DBentity{
 	public int creator;
 	
+
+	@Element(name="updateprocedure")
+	public UpdateProcedure updateProcedure = UpdateProcedure.CCU;
 	@Element(name="visibility")
 	public Visibility visibility;
 	@Element(name="name")
@@ -24,11 +28,12 @@ public class DBclass extends DBentity{
 	
 	public DBclass(){}
 	
-	public DBclass(String name, String description, Visibility visibility, int creatorId){
+	public DBclass(String name, String description, Visibility visibility, int creatorId, UpdateProcedure updateProcedure){
 		this.name = name;
 		this.description= description;
 		this.visibility = visibility;
 		this.creator = creatorId;
+		this.updateProcedure = updateProcedure;
 	}
 	
 	public DBclass(Document doc){
@@ -38,6 +43,8 @@ public class DBclass extends DBentity{
 			this.description = doc.getElementsByTagName("description").item(0).getFirstChild().getNodeValue();
 		if(doc.getElementsByTagName("visibility").getLength()>0)
 			this.visibility =  (doc.getElementsByTagName("visibility").item(0).getFirstChild().getNodeValue().equals("ALL")) ? Visibility.ALL : Visibility.NOTALL;
+		if(doc.getElementsByTagName("updateprocedure").getLength()>0)
+			this.updateProcedure =  (doc.getElementsByTagName("updateprocedure").item(0).getFirstChild().getNodeValue().equals("SUR")) ? UpdateProcedure.SUR : UpdateProcedure.CCU;
 	}
 	
 	public String toXMLWithCstructure(){
@@ -46,6 +53,7 @@ public class DBclass extends DBentity{
 		xml+="<name>"+this.name+"</name>";
 		xml+="<description>"+this.description+"</description>";
 		xml+="<id>"+this.classid+"</id>";
+		xml+="<updateprocedure>"+this.updateProcedure+"</updateprocedure>";
 		if(DBConnector.getActiveClassIdByName(this.name)==0){
 			xml+="<active>false</active>";
 		}

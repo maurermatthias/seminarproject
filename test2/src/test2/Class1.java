@@ -125,6 +125,18 @@ public class Class1 {
 		XMLCreator xmlc = new XMLCreator(userName,pwd);
 		return returnString(XMLCreator.prettyFormat(xmlc.setClassInactive(body)));
 	}
+	
+	//set update procedure
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("changeUpdateProcedure")
+	public Response changeUpdateProcedure(String body, @QueryParam("name") String userName, @QueryParam("password") String pwd){
+		XMLCreator xmlc = new XMLCreator(userName,pwd);
+		return returnString(XMLCreator.prettyFormat(xmlc.changeUpdateProcedure(body)));
+	}
+	
+	
   /*
   
   @GET

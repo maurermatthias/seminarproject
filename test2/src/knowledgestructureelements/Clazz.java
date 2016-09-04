@@ -15,6 +15,8 @@ import org.xml.sax.SAXException;
 import dbentities.DBactiveclass;
 import dbentities.DBclass;
 import test2.DBConnector;
+import updateelements.CompetenceUpdater;
+import updateelements.CompetenceUpdaterCoreCompetences;
 
 public class Clazz {
 	public CompetenceStructure competenceStructure;
@@ -22,6 +24,8 @@ public class Clazz {
 	public int classId=0;
 	public int cstructureId;
 	private int validationCode = 0;
+	public CompetenceUpdater updater = new CompetenceUpdaterCoreCompetences();
+	//public CompetenceUpdater updater = new CompetenceUpdaterSimplifiedUpdateRule();
 	
 	///*
 	//C-tor for loading clazz from classes
@@ -78,6 +82,7 @@ public class Clazz {
 		clazz.description=clazz2.description;
 		clazz.name=clazz2.name;
 		clazz.visibility = clazz2.visibility;
+		clazz.updateProcedure = clazz2.updateProcedure;
 		if(DBConnector.getActiveClassIdByName(clazz.name)==0){
 			return DBConnector.addActiveClass(clazz);
 		}else{
@@ -86,15 +91,23 @@ public class Clazz {
 	}
 
 	//1, if data is fine
-	//%2==0, if task contains 
-	//%3==0, if competence weight sum for one competence is > 1
+	///////////////////////updater -both
 	//%5==0, if competence has neither prerequisites nor successors
+	///////////////////////updater -SUR
+	//%17==0, if competences contain circles
+	///////////////////////updater -CCU
+	//%3==0, if competence weight sum for one competence is > 1
+	///////////////////////taskcollection/here
+	//%2==0, if task contains unknown competence
 	//%7==0, if taskweights do not sum up to one
 	//%11==0, if no cstructure is linked to the class
 	//%13==0, if no tasks are linked to the class
 	public boolean isDataValid(){
-		if(validationCode == 0)
-			validationCode =  competenceStructure.isDataValid() * taskCollection.isDataValid(competenceStructure.competences);
+		if(validationCode == 0){
+			validationCode =  updater.isDataValid(this) * taskCollection.isDataValid(competenceStructure.competences);
+			if(cstructureId==0)
+				validationCode=validationCode*11;
+		}
 		return validationCode==1 ? true : false;
 	}
 	
@@ -123,6 +136,9 @@ public class Clazz {
 		}
 		if(validationCode%13==0){
 			xml+="<errorcode>There is no task linked to the class.<errorcode>";
+		}
+		if(validationCode%17==0){
+			xml+="<errorcode>Competence structure contains a circle!<errorcode>";
 		}
 		xml +="</structurvalidation>";
 		return (xml);

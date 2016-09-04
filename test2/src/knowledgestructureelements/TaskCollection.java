@@ -28,6 +28,10 @@ public class TaskCollection {
 		return str;
 	}
 	
+	//1, if data is fine
+	//%2==0, if task contains unknown competence
+	//%7==0, if taskweights do not sum up to one
+	//%13==0, if no tasks are linked to the class
 	public int isDataValid(List<Competence> competences){
 		int retVal=1;
 		

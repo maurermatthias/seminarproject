@@ -33,6 +33,7 @@ import knowledgestructureelements.Competence;
 import knowledgestructureelements.CompetenceStructure;
 import knowledgestructureelements.Task;
 import knowledgestructureelements.TaskCollection;
+import updateelements.UpdateProcedure;
 
 import java.util.Arrays;
 
@@ -222,6 +223,7 @@ public class DBConnector {
 	                    + "creator INT(64)," 
 	                    + "name TEXT,"  
 	                    + "description TEXT,"  
+	                    + "updateprocedure Int(4),"
 	                    + "visibility Int(4),"
 	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    + "PRIMARY KEY (classid))"; 
@@ -234,6 +236,7 @@ public class DBConnector {
 	                    + "description TEXT,"  
 	                    + "visibility Int(4),"
 	                    + "date TEXT,"
+	                    + "updateprocedure Int(4),"
 	                    + "data TEXT,"
 	                    //+ "FOREIGN KEY (creator) REFERENCES users(userid) ON DELETE CASCADE," 
 	                    + "PRIMARY KEY (classid))"; 
@@ -563,6 +566,7 @@ public class DBConnector {
 		        		cl.name = rs.getString("name");
 		        		cl.description = rs.getString("description");
 		        		cl.visibility = Visibility.fromInteger(rs.getInt("visibility"));
+		        		cl.updateProcedure = UpdateProcedure.fromInteger(rs.getInt("updateprocedure"));
 		        		results.add(cl);
 		        	}
 			    	break;
@@ -576,6 +580,7 @@ public class DBConnector {
 		        		acl.description = rs.getString("description");
 		        		acl.visibility = Visibility.fromInteger(rs.getInt("visibility"));
 		        		acl.data = rs.getString("data");
+		        		acl.updateProcedure = UpdateProcedure.fromInteger(rs.getInt("updateprocedure"));
 		        		results.add(acl);
 		        	}
 			    	break;
@@ -984,14 +989,14 @@ public class DBConnector {
 		    	break;
 		    case "classes":
 		    	DBclass cl = (DBclass) entity;
-		    	cmd += "(creator,name,description,visibility) VALUES ";
-		    	cmd += "("+cl.creator+",'"+cl.name+"','"+cl.description+"',"+Visibility.toInteger(cl.visibility)+");";
+		    	cmd += "(creator,name,description,visibility,updateprocedure) VALUES ";
+		    	cmd += "("+cl.creator+",'"+cl.name+"','"+cl.description+"',"+Visibility.toInteger(cl.visibility)+","+UpdateProcedure.toInteger(cl.updateProcedure)+");";
 		    	execute(cmd);
 		    	break;
 		    case "activeclasses":
 		    	DBactiveclass acl = (DBactiveclass) entity;
-		    	cmd += "(creator,name,description,visibility,data,date) VALUES ";
-		    	cmd += "("+acl.creator+",'"+acl.name+"','"+acl.description+"',"+Visibility.toInteger(acl.visibility)+",'"+acl.data+"','"+acl.date+"');";
+		    	cmd += "(creator,name,description,visibility,data,date,updateprocedure) VALUES ";
+		    	cmd += "("+acl.creator+",'"+acl.name+"','"+acl.description+"',"+Visibility.toInteger(acl.visibility)+",'"+acl.data+"','"+acl.date+"',"+UpdateProcedure.toInteger(acl.updateProcedure)+");";
 		    	execute(cmd);
 		    	break;
 		    case "linkageclasstask":
@@ -1167,6 +1172,7 @@ public class DBConnector {
 			return false;
 		}
 	}
+
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//                    Change data
@@ -1196,6 +1202,9 @@ public class DBConnector {
 	}
 	public static boolean updateActiveClass(DBactiveclass clazz){
 		return update("activeclasses","data='"+clazz.data+"'","name='"+clazz.name+"'");
+	}
+	public static boolean updateUpdateProcedure(String classname, UpdateProcedure updateProcedure){
+		return update("classes","updateprocedure="+UpdateProcedure.toInteger(updateProcedure),"name='"+classname+"'");
 	}
 	
 	///++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1306,13 +1315,13 @@ public class DBConnector {
 		addNewUser(student6);
 		
 		//create classes
-		DBclass class1 = new DBclass("class1","desc. class1",Visibility.ALL,getUserId("teacher1"));
+		DBclass class1 = new DBclass("class1","desc. class1",Visibility.ALL,getUserId("teacher1"),UpdateProcedure.CCU);
 		addNewClass(class1);
-		DBclass class2 = new DBclass("class2","desc. class2",Visibility.NOTALL,getUserId("teacher1"));
+		DBclass class2 = new DBclass("class2","desc. class2",Visibility.NOTALL,getUserId("teacher1"),UpdateProcedure.CCU);
 		addNewClass(class2);
-		DBclass class3 = new DBclass("class3","desc. class3",Visibility.ALL,getUserId("teacher2"));
+		DBclass class3 = new DBclass("class3","desc. class3",Visibility.ALL,getUserId("teacher2"),UpdateProcedure.CCU);
 		addNewClass(class3);
-		DBclass class4 = new DBclass("class4","desc. class4",Visibility.NOTALL,getUserId("teacher2"));
+		DBclass class4 = new DBclass("class4","desc. class4",Visibility.NOTALL,getUserId("teacher2"),UpdateProcedure.CCU);
 		addNewClass(class4);
 
 		//create competence structure for teacher1

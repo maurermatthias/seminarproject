@@ -36,6 +36,7 @@ import dbentities.Visibility;
 import knowledgestructureelements.Clazz;
 import knowledgestructureelements.StudentInClass;
 import knowledgestructureelements.Task;
+import updateelements.UpdateProcedure;
 import dbentities.DBcompetence;
 import dbentities.DBcompetencestructure;
 import dbentities.DBcompetenceweight;
@@ -661,6 +662,59 @@ public class XMLCreator {
 	//***************************************************************
 	//                 ELSE
 	//***************************************************************
+	
+	public String changeUpdateProcedure(String xml){
+		if(usergroup == Usergroup.UNKNOWN || usergroup == Usergroup.STUDENT)
+			return changeUpdateProcedureFail();
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		Document doc = null;
+		try {
+			builder = factory.newDocumentBuilder();		
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(xml);
+			ByteArrayInputStream input =  new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			doc = builder.parse(input);
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return changeUpdateProcedureFail();
+		}
+		
+		String classname;
+		UpdateProcedure updateProcedure;
+		if(doc.getElementsByTagName("classname").getLength()>0 && doc.getElementsByTagName("updateprocedure").getLength()>0){
+			classname = doc.getElementsByTagName("classname").item(0).getFirstChild().getNodeValue();
+			updateProcedure = doc.getElementsByTagName("updateprocedure").item(0).getFirstChild().getNodeValue().equals("SUR") ? UpdateProcedure.SUR : UpdateProcedure.CCU;
+		}else{
+			return changeUpdateProcedureFail();
+		}
+		
+		DBclass clazz = DBConnector.getClassById(DBConnector.getClassIdByName(classname));
+		if(clazz.creator != this.userId && this.usergroup != Usergroup.ADMINISTRATOR)
+			return changeUpdateProcedureFail();
+		
+		if(DBConnector.updateUpdateProcedure(classname, updateProcedure))
+			return changeUpdateProcedureSuccess();
+		else
+			return changeUpdateProcedureFail();
+	}
+	
+	public String changeUpdateProcedureSuccess(){
+		String xml ="<changeupdateprocedure>";
+		xml+="<status>success</status>";
+		xml+="</changeupdateprocedure>";
+		return(xml); 
+	}	
+	
+	public String changeUpdateProcedureFail(){
+		String xml ="<changeupdateprocedure>";
+		xml+="<status>failure</status>";
+		xml+="</changeupdateprocedure>";
+		return(xml);
+	}
+
 	
 	public String setClassActive(String xml){
 		

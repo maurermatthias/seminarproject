@@ -124,27 +124,6 @@ public class CompetenceStructure {
 		return containsCircles;
 	}
 
-	//are all competences linked (5)
-	//weights sum up to 1 (3)
-	public int isDataValid(){
-		int retVal = 1;
-		
-		for(Competence competence : competences){
-			Double weight = 0.0;
-			for(Edge edge : competence.prerequisites){
-				weight += edge.weight;
-			}
-			if(weight>1){
-				retVal = retVal *3; 
-			}
-			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
-				retVal = retVal *5;
-			}
-		}
-		
-		return retVal;
-	}
-
 	public String toXML(){
 		String xml="<competences>";
 		for(Competence competence : competences){

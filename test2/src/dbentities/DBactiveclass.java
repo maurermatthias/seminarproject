@@ -9,12 +9,16 @@ import java.util.TimeZone;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
+import updateelements.UpdateProcedure;
+
 @Root(name="class")
 public class DBactiveclass extends DBentity{
 	public int creator;
 	public String data;
 	public String date;
 	
+	@Element(name="updateprocedure")
+	public UpdateProcedure updateProcedure;
 	@Element(name="visibility")
 	public Visibility visibility;
 	@Element(name="name")

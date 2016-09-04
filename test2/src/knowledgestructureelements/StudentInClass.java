@@ -11,13 +11,11 @@ import updateelements.CompetenceUpdaterSimplifiedUpdateRule;
 public class StudentInClass {
 	public Clazz clazz;
 	public CompetenceState competenceState;
-	//public CompetenceUpdater updater = new CompetenceUpdaterCoreCompetences();
-	public CompetenceUpdater updater = new CompetenceUpdaterSimplifiedUpdateRule();
 	
 	public StudentInClass(int classId, int userId){
 		String classname = ((DBclass)DBConnector.getClassById(classId)).name;
 		this.clazz = DBConnector.getActiveClazzByName(classname);
-		this.competenceState = new CompetenceState(userId, clazz, updater);
+		this.competenceState = new CompetenceState(userId, clazz, clazz.updater);
 	}
 	
 	public String getDiagnosticString(){
@@ -28,13 +26,12 @@ public class StudentInClass {
 
 	//@return null -> no further task useful
 	public Task getNextTask(){
-		return updater.getNextTask(competenceState, clazz);
+		return clazz.updater.getNextTask(competenceState, clazz);
 	}
 	
 	public void updateCompetenceState(int taskId, Boolean success){
 		Task task = clazz.taskCollection.getTaskById(taskId);
-		//clazz.competenceStructure.updateCompetenceState(task, competenceState, success);
-		updater.updateCompetenceState(clazz.competenceStructure, task, competenceState, success);
+		clazz.updater.updateCompetenceState(clazz.competenceStructure, task, competenceState, success);
 		competenceState.store();
 	}
 	

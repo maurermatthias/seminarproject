@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jblas.DoubleMatrix;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -87,5 +88,16 @@ public class Task {
 		}
 		xml+="</edges>";
 		return xml;
+	}
+
+	public DoubleMatrix getCompetenceVector(List<Competence> competences){
+		DoubleMatrix vector = new DoubleMatrix(1,competences.size());
+		for(int i=0;i<competences.size();i++){
+			if(weights.keySet().contains(competences.get(i)))
+				vector.put(0, i,weights.get(competences.get(i)));
+			else
+				vector.put(0, i,0.0);
+		}
+		return vector;
 	}
 }

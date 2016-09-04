@@ -12,6 +12,7 @@ import knowledgestructureelements.Clazz;
 import knowledgestructureelements.Competence;
 import knowledgestructureelements.CompetenceState;
 import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Edge;
 import knowledgestructureelements.Task;
 
 public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
@@ -21,6 +22,11 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 	//competence possessed >= probabilityLimit
 	public double probabilityLimit = 0.8;
 
+	public CompetenceUpdaterSimplifiedUpdateRule(){
+		this.isCCU=false;
+		this.isSUR=true;
+	}
+	
 	@Override
  	public void updateCompetenceState(CompetenceStructure competenceStructure, Task task,
 			CompetenceState currentCompetenecstate, boolean success) {
@@ -126,10 +132,22 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 		}
 	}
 
+	//1, if data is fine
+	//%5==0, if competence has neither prerequisites nor successors
+	//%17==0, if competences contain circles
 	@Override
-	public int isDataValid() {
-		// TODO Auto-generated method stub
-		return 0;
+	public int isDataValid(Clazz clazz){
+		int retVal = 1;
+		
+		for(Competence competence : clazz.competenceStructure.competences){
+			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
+				retVal = retVal *5;
+			}
+		}
+		if(clazz.competenceStructure.containsCircles())
+			retVal = retVal * 17;
+		
+		return retVal;
 	}
 
 	public void updateCompetenceState(double xi0, double xi1, CompetenceStructure competenceStructure, Task task,
