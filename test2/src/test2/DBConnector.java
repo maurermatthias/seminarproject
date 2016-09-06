@@ -923,7 +923,7 @@ public class DBConnector {
 		DBactiveclass aclazz = getActiveClassByName(name);
 		Clazz clazz;
 		try {
-			clazz = new Clazz(aclazz.data);
+			clazz = new Clazz(aclazz.data,aclazz.updateProcedure);
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

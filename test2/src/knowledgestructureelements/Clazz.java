@@ -17,6 +17,8 @@ import dbentities.DBclass;
 import test2.DBConnector;
 import updateelements.CompetenceUpdater;
 import updateelements.CompetenceUpdaterCoreCompetences;
+import updateelements.CompetenceUpdaterSimplifiedUpdateRule;
+import updateelements.UpdateProcedure;
 
 public class Clazz {
 	public CompetenceStructure competenceStructure;
@@ -24,8 +26,7 @@ public class Clazz {
 	public int classId=0;
 	public int cstructureId;
 	private int validationCode = 0;
-	public CompetenceUpdater updater = new CompetenceUpdaterCoreCompetences();
-	//public CompetenceUpdater updater = new CompetenceUpdaterSimplifiedUpdateRule();
+	public CompetenceUpdater updater;
 	
 	///*
 	//C-tor for loading clazz from classes
@@ -34,11 +35,13 @@ public class Clazz {
 		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
 		this.competenceStructure = DBConnector.getCompetenceStructure(cstructureId);
 		this.taskCollection = DBConnector.getTaskCollectionByClassId(classId, competenceStructure);
+		updater = (DBConnector.getClassById(classId).updateProcedure == UpdateProcedure.SUR) ? 
+				new CompetenceUpdaterSimplifiedUpdateRule() : new CompetenceUpdaterCoreCompetences();
 	}
 	//*/
 	
 	//C-tor for loading clazz from activeclasses
-	public Clazz(String xml) throws ParserConfigurationException, SAXException, IOException{
+	public Clazz(String xml, UpdateProcedure updateProcedure) throws ParserConfigurationException, SAXException, IOException{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
 		Document doc = null;
@@ -50,7 +53,10 @@ public class Clazz {
 		//doc.getElementsByTagName("competencestructure").item(0).getFirstChild().getNodeValue()
 		NodeList compstructure = doc.getElementsByTagName("competences").item(0).getChildNodes();
 		NodeList taskcol = doc.getElementsByTagName("taskcollection").item(0).getChildNodes();
-		
+
+		updater = (updateProcedure == UpdateProcedure.SUR) ? 
+				new CompetenceUpdaterSimplifiedUpdateRule() : new CompetenceUpdaterCoreCompetences();
+				
 		competenceStructure = new CompetenceStructure(compstructure);
 		taskCollection= new TaskCollection(taskcol,competenceStructure);
 		

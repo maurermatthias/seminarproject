@@ -111,4 +111,40 @@ public class Competence {
 		xml+="</competence>";
 		return xml;
 	}
+
+	public List<Competence> prerequisitesUnmet(CompetenceState cs, double probabilityLimit){
+		List<Competence> unmet = new ArrayList<Competence>();
+		for(Edge edge : this.prerequisites){
+			if(cs.competencevalues.get(edge.from)<probabilityLimit)
+				unmet.add(edge.from);
+		}
+		return unmet;
+	}
+
+	public List<Competence> prerequisitesMet(CompetenceState cs, double probabilityLimit){
+		List<Competence> met = new ArrayList<Competence>();
+		for(Edge edge : this.prerequisites){
+			if(cs.competencevalues.get(edge.from)>=probabilityLimit)
+				met.add(edge.from);
+		}
+		return met;
+	}
+	
+	public List<Competence> successorsMet(CompetenceState cs, double probabilityLimit){
+		List<Competence> met = new ArrayList<Competence>();
+		for(Edge edge : this.successors){
+			if(cs.competencevalues.get(edge.to)>=probabilityLimit)
+				met.add(edge.to);
+		}
+		return met;
+	}
+
+	public List<Competence> successorsUnmet(CompetenceState cs, double probabilityLimit){
+		List<Competence> unmet = new ArrayList<Competence>();
+		for(Edge edge : this.successors){
+			if(cs.competencevalues.get(edge.to)<probabilityLimit)
+				unmet.add(edge.to);
+		}
+		return unmet;
+	}
 }

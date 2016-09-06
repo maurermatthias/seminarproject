@@ -49,3 +49,7 @@
 192.168.178.75 - - [04/Sep/2016:14:08:58 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4394
 192.168.178.75 - - [04/Sep/2016:14:09:01 +0200] "POST /test2/rest/changeUpdateProcedure?name=teacher1&password=teacher1 HTTP/1.1" 200 76
 192.168.178.75 - - [04/Sep/2016:14:09:19 +0200] "POST /test2/rest/changeUpdateProcedure?name=teacher1&password=teacher1 HTTP/1.1" 200 76
+192.168.178.75 - - [04/Sep/2016:16:39:32 +0200] "POST /test2/rest/changeUpdateProcedure?name=teacher1&password=teacher1 HTTP/1.1" 200 76
+192.168.178.75 - - [04/Sep/2016:16:39:34 +0200] "POST /test2/rest/changeUpdateProcedure?name=teacher1&password=teacher1 HTTP/1.1" 200 76
+192.168.178.75 - - [04/Sep/2016:16:39:39 +0200] "POST /test2/rest/setClassActive?name=teacher1&password=teacher1 HTTP/1.1" 200 50
+192.168.178.75 - - [04/Sep/2016:16:39:48 +0200] "GET /test2/rest/login?name=teacher1&password=teacher1 HTTP/1.1" 200 4394

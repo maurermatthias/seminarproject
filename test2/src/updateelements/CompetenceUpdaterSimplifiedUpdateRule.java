@@ -103,6 +103,56 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 		return values;
 	}
 
+	private double getXiForUpdateToGetLooseOneCompetenceForSure(CompetenceStructure competenceStructure,CompetenceState cs,
+			Competence competence,boolean success){
+		double xi = 0.0;
+		if(success){
+			//add a prerequisite
+			List<Competence> prerequisitesUnmet = competence.prerequisitesUnmet(cs, probabilityLimit);
+			if(prerequisitesUnmet.size()==0 ){
+				
+			}else{
+				if(cs.competencevalues.get(competence) < this.probabilityLimit){
+					//add the competence itself
+					xi =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(competence)))/
+							(cs.competencevalues.get(competence)*(1.0+epsilon+probabilityLimit));
+				}else{
+					//add successor->not correct yet
+					Competence com;
+					double xitmp=0.0;
+					for(Edge edge : competence.successors){
+						com = edge.to;
+						if(cs.competencevalues.get(com) >= this.probabilityLimit)
+							continue;
+						xitmp =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(com)))/
+								(cs.competencevalues.get(com)*(1.0+epsilon+probabilityLimit));
+						if(xi==0.0 || xi>xitmp)
+							xi=xitmp;
+					}
+				}
+			}
+		}else{
+			//vorgänger zuerst verlieren
+			if(cs.competencevalues.get(competence) >= this.probabilityLimit){
+				xi =(cs.competencevalues.get(competence)*(1.0-probabilityLimit+epsilon))/
+						((1.0-cs.competencevalues.get(competence))*(probabilityLimit-epsilon));
+			}else{
+				Competence com;
+				double xitmp=0.0;
+				for(Edge edge : competence.prerequisites){
+					com = edge.from;
+					if(cs.competencevalues.get(com) < this.probabilityLimit)
+						continue;
+					xitmp =(cs.competencevalues.get(com)*(1.0-probabilityLimit+epsilon))/
+							((1.0-cs.competencevalues.get(com))*(probabilityLimit-epsilon));
+					if(xi==0.0 || xi>xitmp)
+						xi=xitmp;
+				}
+			}
+		}
+		return xi;
+	}
+	
 	@Override
 	public void setInitialCompetenceState(CompetenceStructure competenceStructure, CompetenceState competenceState) {
 		if(competenceStructure.containsCircles())
