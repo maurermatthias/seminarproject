@@ -16,8 +16,8 @@ import knowledgestructureelements.Edge;
 import knowledgestructureelements.Task;
 
 public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
-	public double xi0=1.5;
-	public double xi1=1.5;
+	public double xi0=1.5; //up
+	public double xi1=1.5;  //down
 	public double epsilon = 0.0000001;
 	//competence possessed >= probabilityLimit
 	public double probabilityLimit = 0.8;
@@ -41,7 +41,13 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 		
 		//update each competence for its own
 		for(Competence competence : task.weights.keySet()){
+			
+			double tmp = success ? xi0 : xi1;
+			if(success) xi0 = getXiForUpdateToGetLooseOneCompetenceForSure(competenceStructure,currentCompetenecstate,competence,success);
+			else xi1 = getXiForUpdateToGetLooseOneCompetenceForSure(competenceStructure,currentCompetenecstate,competence,success);
 			Map<Competence,Double> updateValues = updateOneCompetence(competenceStructure,currentCompetenecstate,competence,success);
+			if(success) xi0=tmp; else xi1=tmp;
+			
 			for(Competence com : competenceStructure.competences){
 				values.put(com, values.get(com)+updateValues.get(com));
 			}
@@ -55,6 +61,8 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 	
 	private Map<Competence,Double> updateOneCompetence(CompetenceStructure competenceStructure,CompetenceState cs,
 			Competence competence,boolean success){
+		
+		System.out.println("Updating " + (success ? "'up'" : "'down'") +" competence state with SUR (xi0="+Math.round(xi0*100.0)/100.0+",xi1="+Math.round(xi1*100.0)/100.0+")");
 		
 		Map<Competence,Double> values = new HashMap<Competence,Double>();
 		
@@ -106,47 +114,47 @@ public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
 	private double getXiForUpdateToGetLooseOneCompetenceForSure(CompetenceStructure competenceStructure,CompetenceState cs,
 			Competence competence,boolean success){
 		double xi = 0.0;
+		double val;
 		if(success){
-			//add a prerequisite
-			List<Competence> prerequisitesUnmet = competence.prerequisitesUnmet(cs, probabilityLimit);
-			if(prerequisitesUnmet.size()==0 ){
-				
-			}else{
-				if(cs.competencevalues.get(competence) < this.probabilityLimit){
-					//add the competence itself
-					xi =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(competence)))/
-							(cs.competencevalues.get(competence)*(1.0+epsilon+probabilityLimit));
-				}else{
-					//add successor->not correct yet
-					Competence com;
-					double xitmp=0.0;
-					for(Edge edge : competence.successors){
-						com = edge.to;
-						if(cs.competencevalues.get(com) >= this.probabilityLimit)
-							continue;
-						xitmp =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(com)))/
-								(cs.competencevalues.get(com)*(1.0+epsilon+probabilityLimit));
-						if(xi==0.0 || xi>xitmp)
-							xi=xitmp;
+			List<Competence> outerFringe = cs.getOuterFringe(probabilityLimit);
+			for(Competence com : outerFringe){
+				if(com.isSmallerOrEqual(competence) ){
+					val = ((cs.competencevalues.get(com)-cs.competencevalues.get(competence))-(probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(competence)))/
+							(cs.competencevalues.get(competence)*(epsilon+probabilityLimit-1.0));
+					if(xi==0.0 && val >1.0){
+						xi =val;
+					}else if(val >1.0){
+						xi = Math.min(xi,val);
+					}
+				}else if(competence.isSmallerOrEqual(com)){
+					val =(-(probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(competence)))/
+							(cs.competencevalues.get(competence)*(epsilon+probabilityLimit)-cs.competencevalues.get(com));
+					if(xi==0.0 && val >1.0){
+						xi =val;
+					}else if(val >1.0){
+						xi = Math.min(xi,val);
 					}
 				}
 			}
 		}else{
-			//vorgänger zuerst verlieren
-			if(cs.competencevalues.get(competence) >= this.probabilityLimit){
-				xi =(cs.competencevalues.get(competence)*(1.0-probabilityLimit+epsilon))/
-						((1.0-cs.competencevalues.get(competence))*(probabilityLimit-epsilon));
-			}else{
-				Competence com;
-				double xitmp=0.0;
-				for(Edge edge : competence.prerequisites){
-					com = edge.from;
-					if(cs.competencevalues.get(com) < this.probabilityLimit)
-						continue;
-					xitmp =(cs.competencevalues.get(com)*(1.0-probabilityLimit+epsilon))/
-							((1.0-cs.competencevalues.get(com))*(probabilityLimit-epsilon));
-					if(xi==0.0 || xi>xitmp)
-						xi=xitmp;
+			List<Competence> innerFringe = cs.getInnerFringe(probabilityLimit);
+			for(Competence com : innerFringe){
+				if(com.isSmallerOrEqual(competence) ){
+					val =(cs.competencevalues.get(competence)*(1.0-probabilityLimit+epsilon))/
+							((probabilityLimit-epsilon)*(1.0-cs.competencevalues.get(competence))-(cs.competencevalues.get(com)-cs.competencevalues.get(competence)));
+					if(xi==0.0 && val >1.0){
+						xi =val;
+					}else if(val >1.0){
+						xi = Math.min(xi,val);
+					}
+				}else if(competence.isSmallerOrEqual(com)){
+					val =(cs.competencevalues.get(com)-(probabilityLimit-epsilon)*cs.competencevalues.get(competence))/
+							((probabilityLimit-epsilon)*(1.0-cs.competencevalues.get(competence)));
+					if(xi==0.0 && val >1.0){
+						xi =val;
+					}else if(val >1.0){
+						xi = Math.min(xi, val);
+					}
 				}
 			}
 		}

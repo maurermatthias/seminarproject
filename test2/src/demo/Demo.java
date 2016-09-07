@@ -54,9 +54,16 @@ public class Demo{
         //System.out.println(cs.getVectorString(cs.getCoreCompetenceWeightVector(), cs.competences));
         //System.out.println(cs.getMatrixString(cs.getResolvedCompetenceAdjacencyMatrix(), cs.competences));
         
-        System.out.println(sic.competenceState.getDiagnosticString());
+        System.out.println(sic.competenceState.getDiagnosticString(0.8));
         sic.updateCompetenceState(3, true);
-        System.out.println(sic.competenceState.getDiagnosticString());
+        System.out.println(sic.competenceState.getDiagnosticString(0.8));
+        sic.updateCompetenceState(1, true);
+        System.out.println(sic.competenceState.getDiagnosticString(0.8));
+        sic.updateCompetenceState(1, false);
+        System.out.println(sic.competenceState.getDiagnosticString(0.8));
+        System.out.println(sic.competenceState.getDiagnosticStringFringe(0.8));
+        sic.updateCompetenceState(5, false);
+        System.out.println(sic.competenceState.getDiagnosticString(0.8));
 
         System.out.println("END");
     }

@@ -84,6 +84,17 @@ public class CompetenceState {
 		return xml;
 	}
 	
+	public String getDiagnosticString(double probabilityLimit){
+		String str = "Competence state:\n";
+		Double n = 100.0;
+		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
+			Competence key = entry.getKey();
+		    str+="    -"+key.name +"(Possession:"+ (entry.getValue().doubleValue()>=probabilityLimit ? "1" : "0") +",V:"+Math.round(entry.getValue().doubleValue()*n)/n+",Z:"+Math.round(numeratorvalues.get(key)*n)/n+
+		    		",N:"+Math.round(denominatorvalues.get(key)*n)/n+",n:"+nvalues.get(key)+")\n";
+		}
+		return str;
+	}
+	
 	public String getDiagnosticString(){
 		String str = "Competence state:\n";
 		Double n = 100.0;
@@ -94,27 +105,74 @@ public class CompetenceState {
 		}
 		return str;
 	}
-
-	public List<Competence> getOuterFringe(double probabilityLimit){
-		List<Competence> outerFringe = new ArrayList<Competence>();
+	
+	public List<Competence> getPossessedCompetences(double probabilityLimit){
 		List<Competence> possessedCompetences = new ArrayList<Competence>();
 		
 		for(Competence competence : competencevalues.keySet()){
 			if(competencevalues.get(competence)>= probabilityLimit)
 				possessedCompetences.add(competence);
 		}
+		return possessedCompetences;
+	}
+
+	public List<Competence> getOuterFringe(double probabilityLimit){
+		List<Competence> outerFringe = new ArrayList<Competence>();
+		List<Competence> possessedCompetences = getPossessedCompetences(probabilityLimit);
 		
+		boolean add;
 		for(Competence possibleFringeCandidate : competencevalues.keySet()){
 			if(possessedCompetences.contains(possibleFringeCandidate) || outerFringe.contains(possibleFringeCandidate))
 				continue;
+			add = true;
 			for(Edge edgeBack : possibleFringeCandidate.prerequisites){
 				if(!possessedCompetences.contains(edgeBack.from)){
-					continue;
+					add=false;
+					break;
 				}
 			}
-			outerFringe.add(possibleFringeCandidate);
+			if(add)
+				outerFringe.add(possibleFringeCandidate);
 		}
 		
 		return(outerFringe);
+	}
+
+	public List<Competence> getInnerFringe(double probabilityLimit){
+		List<Competence> innerFringe = new ArrayList<Competence>();
+		List<Competence> possessedCompetences = getPossessedCompetences(probabilityLimit);
+		
+		boolean add;
+		for(Competence possibleFringeCandidate : competencevalues.keySet()){
+			if(!possessedCompetences.contains(possibleFringeCandidate) || innerFringe.contains(possibleFringeCandidate))
+				continue;
+			add = true;
+			for(Edge edgeBack : possibleFringeCandidate.successors){
+				if(possessedCompetences.contains(edgeBack.to)){
+					add=false;
+					break;
+				}
+			}
+			if(add)
+				innerFringe.add(possibleFringeCandidate);
+		}
+		
+		return(innerFringe);
+	}
+	
+	public String getDiagnosticStringFringe(double probabilityLimit){
+		String str = "OuterFringe: (";
+		List<Competence> outerFringe = this.getOuterFringe(probabilityLimit);
+		for(Competence competence : outerFringe){
+			str+=competence.name+",";
+		}
+		str+=")\n";
+		str += "InnerFringe: (";
+		List<Competence> innerFringe = this.getInnerFringe(probabilityLimit);
+		for(Competence competence : innerFringe){
+			str+=competence.name+",";
+		}
+		str+=")";
+		return str;
 	}
 }
