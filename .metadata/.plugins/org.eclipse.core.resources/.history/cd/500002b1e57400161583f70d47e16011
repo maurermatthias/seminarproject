@@ -1,0 +1,151 @@
+package knowledgestructureelements;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import dbentities.DBcompetencevalue;
+import test2.DBConnector;
+import updateelements.CompetenceUpdater;
+
+public class CompetenceState {
+	public HashMap<Competence, Double> competencevalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Double> denominatorvalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Double> numeratorvalues = new HashMap<Competence, Double>();
+	public HashMap<Competence, Integer> nvalues = new HashMap<Competence, Integer>();
+	public int cstructureId;
+	public int studentId;
+	public int classId;
+	public CompetenceStructure compStr;
+	
+	public CompetenceState(int  userId, int classId,CompetenceUpdater updater){
+		this.studentId = userId;
+		this.classId = classId;
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		compStr = DBConnector.getCompetenceStructure(cstructureId);
+		loadCompetenceState(updater);
+	}
+	
+	public CompetenceState(int  userId, Clazz clazz,CompetenceUpdater updater){
+		this.studentId = userId;
+		this.classId = clazz.classId;
+		this.cstructureId = DBConnector.getCstructureIdByClassId(classId);
+		compStr = clazz.competenceStructure;
+		loadCompetenceState(updater);
+	}
+	
+	private void loadCompetenceState(CompetenceUpdater updater){
+		Boolean initialiseCompetenceState = false;
+		for(Competence competence : compStr.competences){
+			DBcompetencevalue cv = DBConnector.getCompetenceValueEntry(studentId, classId, DBConnector.getCompetenceIdByName(competence.name));
+			if(cv == null){
+				initialiseCompetenceState = true;
+				break;
+			}
+			competencevalues.put(competence,cv.value);
+			denominatorvalues.put(competence,cv.denominator);
+			numeratorvalues.put(competence,cv.numerator);
+			nvalues.put(competence,cv.n);
+		}
+		if(initialiseCompetenceState)
+			updater.setInitialCompetenceState(compStr, this);
+			
+	}
+	
+	public double getValueByName(String name){
+		for(Competence competence : competencevalues.keySet()){
+			if(competence.name.equals(name))
+				return competencevalues.get(competence);
+		}
+		return -1.0;
+	}
+	
+ 	public void store(){
+		for(Competence competence : compStr.competences){
+			Double value = competencevalues.get(competence);
+			Double denominator = denominatorvalues.get(competence);
+			Double numerator = numeratorvalues.get(competence);
+			Integer n = nvalues.get(competence);
+			DBConnector.updateCompetenceValue(new DBcompetencevalue(studentId, classId, DBConnector.getCompetenceIdByName(competence.name),
+					value,denominator,numerator,n));
+		}
+	}
+	
+	public String toXML(){
+		String xml = "<competencestate>";
+		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
+		    xml+= "<competencevalue>";
+		    xml += "<competence>"+entry.getKey().name+"</competence>";
+		    xml += "<value>"+entry.getValue().doubleValue()+"</value>";
+		    xml+= "</competencevalue>";
+		}
+		xml += "</competencestate>";
+		return xml;
+	}
+	
+	public String getDiagnosticString(){
+		String str = "Competence state:\n";
+		Double n = 100.0;
+		for (Map.Entry<Competence,Double> entry : competencevalues.entrySet()) {
+			Competence key = entry.getKey();
+		    str+="    -"+key.name +"(V:"+Math.round(entry.getValue().doubleValue()*n)/n+",Z:"+Math.round(numeratorvalues.get(key)*n)/n+
+		    		",N:"+Math.round(denominatorvalues.get(key)*n)/n+",n:"+nvalues.get(key)+")\n";
+		}
+		return str;
+	}
+	
+	public List<Competence> getPossessedCompetences(double probabilityLimit){
+		List<Competence> possessedCompetences = new ArrayList<Competence>();
+		
+		for(Competence competence : competencevalues.keySet()){
+			if(competencevalues.get(competence)>= probabilityLimit)
+				possessedCompetences.add(competence);
+		}
+		return possessedCompetences;
+	}
+
+	public List<Competence> getOuterFringe(double probabilityLimit){
+		List<Competence> outerFringe = new ArrayList<Competence>();
+		List<Competence> possessedCompetences = getPossessedCompetences(probabilityLimit);
+		
+		boolean add;
+		for(Competence possibleFringeCandidate : competencevalues.keySet()){
+			if(possessedCompetences.contains(possibleFringeCandidate) || outerFringe.contains(possibleFringeCandidate))
+				continue;
+			add = true;
+			for(Edge edgeBack : possibleFringeCandidate.prerequisites){
+				if(!possessedCompetences.contains(edgeBack.from)){
+					add=false;
+					break;
+				}
+			}
+			if(add)
+				outerFringe.add(possibleFringeCandidate);
+		}
+		
+		return(outerFringe);
+	}
+
+	public List<Competence> getInnerFringe(double probabilityLimit){
+		List<Competence> innerFringe = new ArrayList<Competence>();
+		List<Competence> possessedCompetences = getPossessedCompetences(probabilityLimit);
+		
+		boolean add;
+		for(Competence possibleFringeCandidate : competencevalues.keySet()){
+			if(possessedCompetences.contains(possibleFringeCandidate) || outerFringe.contains(possibleFringeCandidate))
+				continue;
+			add = true;
+			for(Edge edgeBack : possibleFringeCandidate.prerequisites){
+				if(!possessedCompetences.contains(edgeBack.from)){
+					add=false;
+					break;
+				}
+			}
+			if(add)
+				outerFringe.add(possibleFringeCandidate);
+		}
+		
+		return(outerFringe);
+	}
+}

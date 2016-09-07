@@ -1315,7 +1315,7 @@ public class DBConnector {
 		addNewUser(student6);
 		
 		//create classes
-		DBclass class1 = new DBclass("class1","desc. class1",Visibility.ALL,getUserId("teacher1"),UpdateProcedure.SUR);
+		DBclass class1 = new DBclass("class1","desc. class1",Visibility.ALL,getUserId("teacher1"),UpdateProcedure.CCU);
 		addNewClass(class1);
 		DBclass class2 = new DBclass("class2","desc. class2",Visibility.NOTALL,getUserId("teacher1"),UpdateProcedure.CCU);
 		addNewClass(class2);

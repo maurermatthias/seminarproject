@@ -1,0 +1,269 @@
+package updateelements;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import org.jblas.DoubleMatrix;
+
+import knowledgestructureelements.Clazz;
+import knowledgestructureelements.Competence;
+import knowledgestructureelements.CompetenceState;
+import knowledgestructureelements.CompetenceStructure;
+import knowledgestructureelements.Edge;
+import knowledgestructureelements.Task;
+
+public class CompetenceUpdaterSimplifiedUpdateRule extends CompetenceUpdater{
+	public double xi0=1.5;
+	public double xi1=1.5;
+	public double epsilon = 0.0000001;
+	//competence possessed >= probabilityLimit
+	public double probabilityLimit = 0.8;
+
+	public CompetenceUpdaterSimplifiedUpdateRule(){
+		this.isCCU=false;
+		this.isSUR=true;
+	}
+	
+	@Override
+ 	public void updateCompetenceState(CompetenceStructure competenceStructure, Task task,
+			CompetenceState currentCompetenecstate, boolean success) {
+		if(competenceStructure.containsCircles())
+			return;
+		
+		//create structure to sum up calculated competence states
+		Map<Competence,Double> values = new HashMap<Competence,Double>(); 
+		for(Competence competence : competenceStructure.competences){
+			values.put(competence, 0.0);
+		}
+		
+		//update each competence for its own
+		for(Competence competence : task.weights.keySet()){
+			Map<Competence,Double> updateValues = updateOneCompetence(competenceStructure,currentCompetenecstate,competence,success);
+			for(Competence com : competenceStructure.competences){
+				values.put(com, values.get(com)+updateValues.get(com));
+			}
+		}
+		
+		//calculate the mean and store in the competence state
+		for(Competence com : competenceStructure.competences){
+			currentCompetenecstate.competencevalues.put(com, values.get(com)/((double) task.weights.size()));
+		}
+	}
+	
+	private Map<Competence,Double> updateOneCompetence(CompetenceStructure competenceStructure,CompetenceState cs,
+			Competence competence,boolean success){
+		
+		Map<Competence,Double> values = new HashMap<Competence,Double>();
+		
+		Double N = success ? xi0*cs.getValueByName(competence.name)+(1.0-cs.getValueByName(competence.name)) : 
+			cs.getValueByName(competence.name)+xi1*(1.0-cs.getValueByName(competence.name));
+		
+		for(Competence com : competenceStructure.competences){
+			if(competence.isSmallerOrEqual(com) && !competence.name.equals(com.name)){
+				if(success){					
+					values.put(com, (xi0*cs.getValueByName(com.name))/N);
+				}else{
+					values.put(com, (cs.getValueByName(com.name))/N);
+				}
+			}else if(com.isSmallerOrEqual(competence)){
+				if(success){
+					values.put(com, (xi0*cs.getValueByName(competence.name)+(cs.getValueByName(com.name)-cs.getValueByName(competence.name)))/N);
+				}else{
+					values.put(com, (cs.getValueByName(competence.name)+xi1*(cs.getValueByName(com.name)-cs.getValueByName(competence.name)))/N);
+				}
+			}else{
+				values.put(com, cs.getValueByName(com.name));
+			}
+		}
+		
+		//*consistency check
+		boolean changes = true;
+		while(changes){
+			changes = false;
+			for(Competence c1 : competenceStructure.competences){
+				for(Competence c2 : competenceStructure.competences){
+					if(c1.name.equals(c2.name))
+						break;
+					if(c1.isSmallerOrEqual(c2)  && values.get(c1) <= values.get(c2)){
+						if(success){
+							values.put(c1,Math.min(1.0-epsilon, values.get(c2)-epsilon));
+						}else{
+							values.put(c2,Math.max(epsilon, values.get(c1)-epsilon));
+						}
+						changes=true;
+					}
+				}
+			}
+		}
+		//*/
+		
+		return values;
+	}
+
+	private double getXiForUpdateToGetLooseOneCompetenceForSure(CompetenceStructure competenceStructure,CompetenceState cs,
+			Competence competence,boolean success){
+		double xi = 0.0;
+		if(success){
+			//add a prerequisite
+			List<Competence> prerequisitesUnmet = competence.prerequisitesUnmet(cs, probabilityLimit);
+			if(prerequisitesUnmet.size()==0 ){
+				
+			}else{
+				if(cs.competencevalues.get(competence) < this.probabilityLimit){
+					//add the competence itself
+					xi =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(competence)))/
+							(cs.competencevalues.get(competence)*(1.0+epsilon+probabilityLimit));
+				}else{
+					//add successor->not correct yet
+					Competence com;
+					double xitmp=0.0;
+					for(Edge edge : competence.successors){
+						com = edge.to;
+						if(cs.competencevalues.get(com) >= this.probabilityLimit)
+							continue;
+						xitmp =((probabilityLimit+epsilon)*(1.0-cs.competencevalues.get(com)))/
+								(cs.competencevalues.get(com)*(1.0+epsilon+probabilityLimit));
+						if(xi==0.0 || xi>xitmp)
+							xi=xitmp;
+					}
+				}
+			}
+		}else{
+			//vorgänger zuerst verlieren
+			if(cs.competencevalues.get(competence) >= this.probabilityLimit){
+				xi =(cs.competencevalues.get(competence)*(1.0-probabilityLimit+epsilon))/
+						((1.0-cs.competencevalues.get(competence))*(probabilityLimit-epsilon));
+			}else{
+				Competence com;
+				double xitmp=0.0;
+				for(Edge edge : competence.prerequisites){
+					com = edge.from;
+					if(cs.competencevalues.get(com) < this.probabilityLimit)
+						continue;
+					xitmp =(cs.competencevalues.get(com)*(1.0-probabilityLimit+epsilon))/
+							((1.0-cs.competencevalues.get(com))*(probabilityLimit-epsilon));
+					if(xi==0.0 || xi>xitmp)
+						xi=xitmp;
+				}
+			}
+		}
+		return xi;
+	}
+	
+	@Override
+	public void setInitialCompetenceState(CompetenceStructure competenceStructure, CompetenceState competenceState) {
+		if(competenceStructure.containsCircles())
+			return;
+		Map<Competence,Integer> up = new HashMap<Competence,Integer>();
+		Map<Competence,Integer> down = new HashMap<Competence,Integer>();
+		for(Competence competence : competenceStructure.competences){
+			up.put(competence, 0);
+			down.put(competence, 0);
+		}
+		for(Competence c1 : competenceStructure.competences){
+			for(Competence c2 : competenceStructure.competences){
+				if(c1.isSmallerOrEqual(c2)){
+					up.put(c1, up.get(c1)+1);
+					down.put(c2, down.get(c2)+1);
+				}
+			}
+		}
+		Double value;
+		for(Competence competence : competenceStructure.competences){
+			value = ((double)(competenceStructure.competences.size()+up.get(competence)-down.get(competence)+1))/
+					((double)(2*competenceStructure.competences.size()+2));
+			competenceState.competencevalues.put(competence, value);
+			competenceState.denominatorvalues.put(competence, -1.0);
+			competenceState.numeratorvalues.put(competence, -1.0);
+			competenceState.nvalues.put(competence, -1);
+		}
+	}
+
+	//1, if data is fine
+	//%5==0, if competence has neither prerequisites nor successors
+	//%17==0, if competences contain circles
+	@Override
+	public int isDataValid(Clazz clazz){
+		int retVal = 1;
+		
+		for(Competence competence : clazz.competenceStructure.competences){
+			if(competence.prerequisites.size()==0 && competence.successors.size() ==0){
+				retVal = retVal *5;
+			}
+		}
+		if(clazz.competenceStructure.containsCircles())
+			retVal = retVal * 17;
+		
+		return retVal;
+	}
+
+	public void updateCompetenceState(double xi0, double xi1, CompetenceStructure competenceStructure, Task task,
+			CompetenceState currentCompetenecstate, boolean success) {
+		double oldxi0 = this.xi0;
+		double oldxi1 = this.xi1;
+		this.xi1 = xi1;
+		this.xi0 = xi0;
+		updateCompetenceState(competenceStructure,  task, currentCompetenecstate,  success);
+		this.xi1 = oldxi1;
+		this.xi0 = oldxi0;
+		
+	}
+
+
+	@Override
+	public Task getNextTask(CompetenceState competenceState,Clazz clazz) {
+		List<Competence> outerFringe = competenceState.getOuterFringe(probabilityLimit);
+		Map<Task,List<Competence>> missingCompetences = new HashMap<Task,List<Competence>>();
+		for(Task task : clazz.taskCollection.tasks){
+			missingCompetences.put(task, new ArrayList<Competence>());
+			for(Competence competence : task.weights.keySet()){
+				if(competenceState.getValueByName(competence.name) < probabilityLimit){
+					missingCompetences.get(task).add(competence);
+				}
+			}
+		}
+		Map<Task,int[]> missingCompNr = new HashMap<Task,int[]>();
+		int missingCompetencesInFringe;
+		int missingCompetencesNotInFringe;
+		for(Task task : missingCompetences.keySet()){
+			missingCompetencesInFringe=0;
+			missingCompetencesNotInFringe=0;
+			for(Competence competence : missingCompetences.get(task)){
+				if(outerFringe.contains(competence))
+					missingCompetencesInFringe++;
+				else
+					missingCompetencesNotInFringe++;
+			}
+			int[] missingNr = {missingCompetencesInFringe,missingCompetencesNotInFringe};
+			missingCompNr.put(task, missingNr);
+		}
+		
+		//search for suitable task
+		List<Task> choosenTasks = new ArrayList<Task>();
+		int allowedCompetencesInFringe = 1;
+		int allowedCompetencesNotInFringe =0;
+		while(choosenTasks.size()==0){
+			for(Task task : missingCompNr.keySet()){
+				if(missingCompNr.get(task)[0]==allowedCompetencesInFringe && missingCompNr.get(task)[1]==allowedCompetencesNotInFringe){
+					choosenTasks.add(task);
+				}
+				allowedCompetencesInFringe++;
+				if(allowedCompetencesInFringe > competenceState.competencevalues.keySet().size()){
+					allowedCompetencesInFringe=0;
+					allowedCompetencesNotInFringe++;
+					if(allowedCompetencesNotInFringe > competenceState.competencevalues.keySet().size()){
+						return null;
+					}
+				}
+			}
+		}
+		
+		Random rand = new Random();
+		int randomNum = rand.nextInt(choosenTasks.size());
+		return choosenTasks.get(randomNum);
+	}
+	
+}
